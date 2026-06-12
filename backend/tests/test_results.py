@@ -257,3 +257,31 @@ class TestGetHistory:
         assert "status" in item
         assert "overall_score" in item
         assert "created_at" in item
+
+    def test_history_item_null_job_id_and_technique(self, client, db):
+        """Jobs created via POST /upload have job_id=None and technique=None.
+        HistoryItem must accept None for both fields without raising a
+        ValidationError (LIN-178).
+        """
+        session_id = "null-fields-session"
+        # Create a job with both nullable fields left as None (mimics the
+        # POST /upload code path before the worker fills them in).
+        job = Job(
+            job_id=None,
+            session_id=session_id,
+            technique=None,
+            status=JobStatus.pending,
+            created_at=datetime.now(timezone.utc),
+        )
+        db.add(job)
+        db.commit()
+        db.refresh(job)
+
+        resp = client.get("/history", params={"session_id": session_id})
+
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["total"] == 1
+        item = body["items"][0]
+        assert item["job_id"] is None
+        assert item["technique"] is None

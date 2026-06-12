@@ -82,8 +82,8 @@ class AnalysisResultResponse(BaseModel):
 
 
 class HistoryItem(BaseModel):
-    job_id: str
-    technique: str
+    job_id: str | None
+    technique: str | None
     status: JobStatus
     overall_score: int | None
     created_at: datetime
