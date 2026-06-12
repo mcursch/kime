@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from backend.config import UPLOAD_DIR
 from backend.database import init_db
 from backend.routers.analyze import router as analyze_router
+from backend.routers.analyze import start_eviction_task, stop_eviction_task
 from backend.routers.jobs import router as jobs_router
 from backend.routers.results import router as results_router
 from backend.routers.upload import router as upload_router
@@ -44,9 +45,13 @@ async def lifespan(app: FastAPI):
     # Ensure ORM tables exist in the configured database.
     init_db()
 
+    # Start background task that evicts expired jobs from the in-memory store.
+    start_eviction_task()
+
     yield
 
-    # Teardown: nothing to clean up for the Anthropic client.
+    # Teardown: stop the job-eviction background task.
+    await stop_eviction_task()
 
 
 app = FastAPI(
