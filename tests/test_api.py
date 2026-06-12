@@ -12,14 +12,14 @@ offline.
 """
 
 import os
-import time
-import sqlite3
-import tempfile
 from unittest.mock import MagicMock, patch
 
 import anthropic
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 
 # ---------------------------------------------------------------------------
@@ -48,30 +48,57 @@ def _make_mock_client(feedback_text: str = "Your hip rotation is 40° short.") -
 def app_with_client(tmp_path, monkeypatch):
     """
     Yield a TestClient whose lifespan has been patched so it uses:
-    - an in-memory-equivalent SQLite DB in tmp_path
+    - a fresh in-memory SQLite DB (via dependency_overrides, no module reload)
     - a mock Anthropic client
     - a fake ANTHROPIC_API_KEY
+
+    Using ``app.dependency_overrides`` instead of ``importlib.reload`` means
+    the global ``backend.database.engine`` is never mutated, so subsequent
+    test modules (e.g. ``tests/test_upload.py``) see the engine they expect.
     """
-    db_path = str(tmp_path / "test.db")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test-key")
-    monkeypatch.setenv("KIME_DB_PATH", db_path)
 
     mock_client = _make_mock_client()
 
-    # Patch the Anthropic constructor so lifespan uses our mock.
-    with patch("backend.main.anthropic.Anthropic", return_value=mock_client):
-        # Re-import after env vars are set so DB_PATH is picked up.
-        import importlib
-        import backend.database as db_module
-        import backend.main as main_module
+    # Import here (not at module level) to avoid circular-import issues, but
+    # these imports are idempotent – they do NOT reload the modules.
+    import backend.database as db_module
+    import backend.models  # noqa: F401 – registers models on Base metadata
+    from backend.database import Base, get_db
+    from backend.main import app
 
-        importlib.reload(db_module)
-        importlib.reload(main_module)
+    # Build a self-contained in-memory engine for this test invocation.
+    # StaticPool shares a single connection so that tables created here are
+    # visible to all sessions derived from this engine.
+    test_engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(bind=test_engine)
+    TestSession = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
-        from backend.main import app
+    def override_get_db():
+        db = TestSession()
+        try:
+            yield db
+        finally:
+            db.close()
 
-        with TestClient(app, raise_server_exceptions=True) as client:
-            yield client, mock_client, db_path
+    app.dependency_overrides[get_db] = override_get_db
+
+    # The background worker calls ``backend.database.SessionLocal()`` directly
+    # (not via ``get_db``), so we also patch the module-level attribute so the
+    # worker sees the same in-memory DB as the route handlers.
+    monkeypatch.setattr(db_module, "SessionLocal", TestSession)
+
+    try:
+        with patch("backend.main.anthropic.Anthropic", return_value=mock_client):
+            with TestClient(app, raise_server_exceptions=True) as client:
+                yield client, mock_client, str(tmp_path / "test.db")
+    finally:
+        # Always restore dependency_overrides so later tests are not affected.
+        app.dependency_overrides.pop(get_db, None)
 
 
 # ---------------------------------------------------------------------------
@@ -131,17 +158,13 @@ class TestResultsEndpoint:
 
 
 class TestStartupValidation:
-    def test_raises_on_missing_api_key(self, tmp_path, monkeypatch):
-        """App must raise RuntimeError at startup when ANTHROPIC_API_KEY is absent."""
+    def test_raises_on_missing_api_key(self, monkeypatch):
+        """App must raise RuntimeError at startup when ANTHROPIC_API_KEY is absent.
+
+        The lifespan re-checks ``os.environ`` each time a TestClient starts, so
+        we only need to remove the env var – no module reload required.
+        """
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-        monkeypatch.setenv("KIME_DB_PATH", str(tmp_path / "test.db"))
-
-        import importlib
-        import backend.database as db_module
-        import backend.main as main_module
-
-        importlib.reload(db_module)
-        importlib.reload(main_module)
 
         from backend.main import app
 
