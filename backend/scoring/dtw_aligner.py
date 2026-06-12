@@ -71,6 +71,61 @@ def load_reference_template(technique_slug: str) -> np.ndarray:
     return np.load(template_path)
 
 
+def align_to_reference(
+    technique: str,
+    landmark_sequence: np.ndarray,
+) -> np.ndarray:
+    """Align *landmark_sequence* to the expert reference template for *technique*.
+
+    This is the high-level entry point used by the scoring engine.  It loads
+    the reference template, runs DTW alignment, and returns the user's frames
+    reordered according to the optimal warping path so that every returned
+    frame is phase-matched to a reference frame.
+
+    Parameters
+    ----------
+    technique:
+        Technique slug, e.g. ``"front_kick"``.  Must have a corresponding
+        ``.npy`` file in ``backend/data/references/``.
+    landmark_sequence:
+        Normalized, smoothed user pose sequence, shape ``(T, 33, 3)``.
+
+    Returns
+    -------
+    np.ndarray
+        Warped user sequence, shape ``(L, 33, 3)`` where *L* is the length of
+        the DTW warping path.  Each frame ``aligned[k]`` is the user frame
+        that best matches reference frame ``path[k][1]``.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the reference template for *technique* does not exist.
+    ValueError
+        If *landmark_sequence* is not a valid 3-D array with 33 landmarks and
+        3 coordinates.
+    """
+    landmark_sequence = np.asarray(landmark_sequence, dtype=np.double)
+    if landmark_sequence.ndim != 3 or landmark_sequence.shape[1:] != (33, 3):
+        raise ValueError(
+            f"landmark_sequence must have shape (T, 33, 3), "
+            f"got {landmark_sequence.shape}."
+        )
+
+    reference = load_reference_template(technique)  # (n_frames, 99)
+
+    # Flatten (T, 33, 3) -> (T, 99) for the DTW distance computation.
+    T = landmark_sequence.shape[0]
+    flat_seq = landmark_sequence.reshape(T, -1)  # (T, 99)
+
+    result = align_sequence(flat_seq, reference)
+
+    # Reorder user frames according to the query indices in the warping path.
+    query_indices = [i for i, _j in result.path]
+    aligned = landmark_sequence[query_indices]  # (len(path), 33, 3)
+    return aligned
+
+
 def align_sequence(
     sequence: np.ndarray,
     reference: np.ndarray,

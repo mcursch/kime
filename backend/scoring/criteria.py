@@ -373,3 +373,69 @@ def retraction_speed(
         delta=round(delta, 6),
         unit="torso-lengths/frame",
     )
+
+
+# ---------------------------------------------------------------------------
+# Aggregate scorer
+# ---------------------------------------------------------------------------
+
+# Maps each criterion function's internal name to the canonical slug used by
+# the scoring engine (weights.CRITERION_NAMES).
+_CRITERION_NAME_MAP: dict[str, str] = {
+    "chamber_height": "chamber_height",
+    "hip_rotation_at_impact": "hip_rotation",
+    "extension_angle": "extension_angle",
+    "balance_com": "balance",
+    "guard_position": "guard_position",
+    "retraction_speed": "retraction_speed",
+}
+
+
+def score_all_criteria(
+    technique: str,
+    aligned_seq: np.ndarray,
+) -> dict[str, tuple[float, float]]:
+    """Run all six biomechanical criterion scorers and return results as a dict.
+
+    The reference template for *technique* is loaded from disk so that per-
+    criterion deltas are computed relative to the expert reference.
+
+    Parameters
+    ----------
+    technique:
+        Technique slug, e.g. ``"front_kick"``.
+    aligned_seq:
+        User landmark sequence that has already been DTW-aligned to the
+        reference.  Shape ``(T, 33, 3)``.
+
+    Returns
+    -------
+    dict[str, tuple[float, float]]
+        Mapping of canonical criterion name → ``(score, delta)`` where
+        *score* is normalised to **[0.0, 1.0]** and *delta* retains the
+        physical units defined by each criterion scorer.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the reference template for *technique* does not exist.
+    """
+    # Import here to avoid a circular import between criteria ↔ dtw_aligner.
+    from backend.scoring.dtw_aligner import load_reference_template  # noqa: PLC0415
+
+    ref_flat = load_reference_template(technique)  # (n_frames, 99)
+    reference = ref_flat.reshape(ref_flat.shape[0], 33, 3)
+
+    raw_results: list[CriterionResult] = [
+        chamber_height(aligned_seq, reference),
+        hip_rotation_at_impact(aligned_seq, reference),
+        extension_angle(aligned_seq, reference),
+        balance_com(aligned_seq, reference),
+        guard_position(aligned_seq, reference),
+        retraction_speed(aligned_seq, reference),
+    ]
+
+    return {
+        _CRITERION_NAME_MAP[cr.name]: (cr.score / 100.0, cr.delta)
+        for cr in raw_results
+    }
