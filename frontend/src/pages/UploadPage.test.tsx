@@ -52,16 +52,13 @@ describe('UploadPage', () => {
   // (a) Successful upload → polling → navigate
   it('navigates to the attempt page after a successful upload and completed job', async () => {
     vi.mocked(client.uploadVideo).mockResolvedValue({
-      job_id: 'job-1',
-      attempt_id: 'attempt-1',
+      job_id: 1,
+      status: 'pending',
     });
     vi.mocked(client.getJobStatus).mockResolvedValue({
-      job_id: 'job-1',
-      attempt_id: 'attempt-1',
+      job_id: 1,
       status: 'completed',
-      created_at: '',
-      finished_at: '',
-      error: null,
+      error_message: null,
     });
 
     renderPage();
@@ -77,22 +74,19 @@ describe('UploadPage', () => {
       await vi.advanceTimersByTimeAsync(2_000);
     });
 
-    expect(mockNavigate).toHaveBeenCalledWith('/attempt-1');
+    expect(mockNavigate).toHaveBeenCalledWith('/1');
   });
 
   // (b) Failed job → error message rendered
   it('shows an error message when the job fails', async () => {
     vi.mocked(client.uploadVideo).mockResolvedValue({
-      job_id: 'job-2',
-      attempt_id: 'attempt-2',
+      job_id: 2,
+      status: 'pending',
     });
     vi.mocked(client.getJobStatus).mockResolvedValue({
-      job_id: 'job-2',
-      attempt_id: 'attempt-2',
+      job_id: 2,
       status: 'failed',
-      created_at: '',
-      finished_at: '',
-      error: 'Pose estimation failed',
+      error_message: 'Pose estimation failed',
     });
 
     renderPage();
@@ -114,20 +108,17 @@ describe('UploadPage', () => {
   // (c) Network error during polling is retried, not surfaced to the user
   it('retries silently on a transient network error and eventually navigates', async () => {
     vi.mocked(client.uploadVideo).mockResolvedValue({
-      job_id: 'job-3',
-      attempt_id: 'attempt-3',
+      job_id: 3,
+      status: 'pending',
     });
 
     // First poll throws a network error; second poll returns completed.
     vi.mocked(client.getJobStatus)
       .mockRejectedValueOnce(new TypeError('Failed to fetch'))
       .mockResolvedValue({
-        job_id: 'job-3',
-        attempt_id: 'attempt-3',
+        job_id: 3,
         status: 'completed',
-        created_at: '',
-        finished_at: '',
-        error: null,
+        error_message: null,
       });
 
     renderPage();
@@ -150,6 +141,6 @@ describe('UploadPage', () => {
       await vi.advanceTimersByTimeAsync(2_000);
     });
 
-    expect(mockNavigate).toHaveBeenCalledWith('/attempt-3');
+    expect(mockNavigate).toHaveBeenCalledWith('/3');
   });
 });

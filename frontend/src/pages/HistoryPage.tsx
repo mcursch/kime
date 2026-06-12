@@ -56,7 +56,7 @@ function TrendChart({ attempts }: { attempts: AttemptSummary[] }) {
       {/* Data points */}
       {sorted.map((a, i) => (
         <circle
-          key={a.attempt_id}
+          key={a.job_id}
           cx={xOf(i)}
           cy={yOf(a.overall_score)}
           r={4}
@@ -134,8 +134,8 @@ export default function HistoryPage() {
       {attempts.length > 0 && (
         <ul>
           {attempts.map((a) => (
-            <li key={a.attempt_id}>
-              <button type="button" onClick={() => navigate(`/${a.attempt_id}`)}>
+            <li key={a.job_id}>
+              <button type="button" onClick={() => navigate(`/${a.job_id}`)}>
                 {new Date(a.created_at).toLocaleDateString()} —{' '}
                 {a.technique.replace(/_/g, ' ')} — Score: {a.overall_score}
               </button>

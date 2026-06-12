@@ -26,7 +26,7 @@ export default function UploadPage() {
     setUploading(true);
 
     try {
-      const { job_id, attempt_id } = await uploadVideo(file, technique);
+      const { job_id } = await uploadVideo(file, technique);
 
       // Poll until the job is complete or fails
       const intervalId = setInterval(async () => {
@@ -34,10 +34,10 @@ export default function UploadPage() {
           const status = await getJobStatus(job_id);
           if (status.status === 'completed') {
             clearInterval(intervalId);
-            navigate(`/${attempt_id}`);
+            navigate(`/${job_id}`);
           } else if (status.status === 'failed') {
             clearInterval(intervalId);
-            setError(status.error ?? 'Analysis failed');
+            setError(status.error_message ?? 'Analysis failed');
             setUploading(false);
           }
         } catch {

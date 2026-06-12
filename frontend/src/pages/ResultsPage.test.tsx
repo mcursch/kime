@@ -17,15 +17,26 @@ vi.stubGlobal('cancelAnimationFrame', vi.fn());
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
 const MOCK_RESULT: client.AttemptResult = {
-  attempt_id: 'attempt-42',
+  job_id: 'job-42',
+  status: 'complete',
   technique: 'front_kick',
+  session_id: null,
   overall_score: 78,
-  criteria: [
-    { name: 'Chamber Height', score: 8, max_score: 10, delta_from_reference: -2, feedback: 'Good lift.' },
-    { name: 'Hip Rotation', score: 7, max_score: 10, delta_from_reference: -3, feedback: 'Rotate more.' },
-  ],
-  coaching_feedback: 'Focus on your chamber.',
-  video_url: '/video/attempt-42.mp4',
+  scores: {
+    'Chamber Height': 0.8,
+    'Hip Rotation': 0.7,
+  },
+  metric_deltas: {
+    'Chamber Height': -0.2,
+    'Hip Rotation': -0.3,
+  },
+  keyframe_paths: [],
+  feedback: 'Focus on your chamber.',
+  criteria: {
+    'Chamber Height': -0.2,
+    'Hip Rotation': -0.3,
+  },
+  video_url: '/video/job-42.mp4',
   created_at: '2026-01-01T12:00:00Z',
 };
 

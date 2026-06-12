@@ -1,19 +1,25 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getAttemptResult, type AttemptResult, type CriterionScore } from '../api/client';
+import { getAttemptResult, type AttemptResult } from '../api/client';
 import SkeletonOverlay from '../components/SkeletonOverlay';
 
 // ---------------------------------------------------------------------------
 // Radar chart — pure SVG, no external charting library needed
 // ---------------------------------------------------------------------------
 
-function RadarChart({ criteria }: { criteria: CriterionScore[] }) {
-  if (!criteria || criteria.length === 0) return null;
+/**
+ * Render a radar chart for per-criterion scores.
+ *
+ * @param scores  Record mapping criterion name → 0-1 score value.
+ */
+function RadarChart({ scores }: { scores: Record<string, number> }) {
+  const entries = Object.entries(scores);
+  if (entries.length === 0) return null;
 
   const size = 300;
   const center = size / 2;
   const radius = 110;
-  const n = criteria.length;
+  const n = entries.length;
   const angleStep = (2 * Math.PI) / n;
 
   /** Cartesian point on the radar for a given axis index and radial fraction. */
@@ -30,9 +36,9 @@ function RadarChart({ criteria }: { criteria: CriterionScore[] }) {
       return `${p.x},${p.y}`;
     }).join(' ');
 
-  const scorePolygon = criteria
-    .map((c, i) => {
-      const pct = c.max_score > 0 ? Math.min(c.score / c.max_score, 1) : 0;
+  const scorePolygon = entries
+    .map(([, value], i) => {
+      const pct = Math.min(Math.max(value, 0), 1);
       const p = getPoint(i, radius * pct);
       return `${p.x},${p.y}`;
     })
@@ -82,7 +88,7 @@ function RadarChart({ criteria }: { criteria: CriterionScore[] }) {
       />
 
       {/* Axis labels */}
-      {criteria.map((c, i) => {
+      {entries.map(([name], i) => {
         const pt = getPoint(i, radius + 22);
         return (
           <text
@@ -94,7 +100,7 @@ function RadarChart({ criteria }: { criteria: CriterionScore[] }) {
             fontSize={10}
             fill="#374151"
           >
-            {c.name}
+            {name}
           </text>
         );
       })}
@@ -144,7 +150,8 @@ export default function ResultsPage() {
 
   if (!result) return null;
 
-  const techniqueLabel = result.technique.replace(/_/g, ' ');
+  const techniqueLabel = (result.technique ?? '').replace(/_/g, ' ');
+  const scoreEntries = Object.entries(result.scores);
 
   return (
     <main>
@@ -160,15 +167,17 @@ export default function ResultsPage() {
         </p>
       </section>
 
-      {result.criteria.length > 0 && (
+      {scoreEntries.length > 0 && (
         <section aria-label="Criterion scores">
           <h2>Score Breakdown</h2>
-          <RadarChart criteria={result.criteria} />
+          <RadarChart scores={result.scores} />
           <ul>
-            {result.criteria.map((c) => (
-              <li key={c.name}>
-                <strong>{c.name}</strong>: {c.score}/{c.max_score}
-                {c.feedback && ` — ${c.feedback}`}
+            {scoreEntries.map(([name, score]) => (
+              <li key={name}>
+                <strong>{name}</strong>: {Math.round(score * 100)}
+                {result.criteria?.[name] !== undefined && (
+                  <> (Δ {result.criteria[name].toFixed(2)})</>
+                )}
               </li>
             ))}
           </ul>
@@ -182,10 +191,10 @@ export default function ResultsPage() {
         </section>
       )}
 
-      {result.coaching_feedback && (
+      {result.feedback && (
         <section aria-label="Coaching feedback">
           <h2>Coaching Feedback</h2>
-          <p>{result.coaching_feedback}</p>
+          <p>{result.feedback}</p>
         </section>
       )}
     </main>

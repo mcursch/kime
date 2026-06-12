@@ -20,8 +20,9 @@ vi.mock('react-router-dom', async (importOriginal) => {
 
 function makeAttempt(n: number): client.AttemptSummary {
   return {
-    attempt_id: `attempt-${n}`,
+    job_id: `attempt-${n}`,
     technique: 'front_kick',
+    status: 'completed',
     overall_score: 60 + n,
     created_at: `2026-01-${String(n).padStart(2, '0')}T12:00:00Z`,
   };
