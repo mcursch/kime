@@ -102,11 +102,17 @@ export async function uploadVideo(
 /**
  * Poll the status of an async analysis job.
  *
- * @param jobId  The job_id returned by `uploadVideo`.
- * @returns      Current status plus timestamps and any error message.
+ * @param jobId    The job_id returned by `uploadVideo`.
+ * @param options  Optional fetch options (e.g. an AbortSignal).
+ * @returns        Current status plus timestamps and any error message.
  */
-export async function getJobStatus(jobId: string): Promise<JobStatusResponse> {
-  return request<JobStatusResponse>(`/api/jobs/${encodeURIComponent(jobId)}`);
+export async function getJobStatus(
+  jobId: string,
+  options?: { signal?: AbortSignal },
+): Promise<JobStatusResponse> {
+  return request<JobStatusResponse>(`/api/jobs/${encodeURIComponent(jobId)}`, {
+    signal: options?.signal,
+  });
 }
 
 /**

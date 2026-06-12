@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   uploadVideo,
@@ -41,11 +41,25 @@ export default function UploadPage() {
   const chunksRef = useRef<BlobPart[]>([]);
   const liveVideoRef = useRef<HTMLVideoElement>(null);
   const playbackVideoRef = useRef<HTMLVideoElement>(null);
+  // Tracks the current object URL so it can be revoked before creating a new one.
+  const blobUrlRef = useRef<string | null>(null);
 
   // Submission & polling
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
   const [pollStatus, setPollStatus] = useState<JobStatus | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // Holds the AbortController for the current polling loop.
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // On unmount: abort any in-flight polling and revoke the current blob URL.
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+      }
+    };
+  }, []);
 
   // Derived: whichever video the user has prepared
   const videoToSubmit: File | null =
@@ -66,6 +80,11 @@ export default function UploadPage() {
         video: true,
         audio: false,
       });
+
+      // Recording always takes priority over a previously selected file.
+      setPickedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+
       streamRef.current = stream;
 
       if (liveVideoRef.current) {
@@ -93,7 +112,13 @@ export default function UploadPage() {
           liveVideoRef.current.srcObject = null;
         }
         if (playbackVideoRef.current) {
-          playbackVideoRef.current.src = URL.createObjectURL(blob);
+          // Revoke the previous object URL before creating a new one.
+          if (blobUrlRef.current) {
+            URL.revokeObjectURL(blobUrlRef.current);
+          }
+          const url = URL.createObjectURL(blob);
+          blobUrlRef.current = url;
+          playbackVideoRef.current.src = url;
         }
         setRecordState('idle');
       };
@@ -123,14 +148,22 @@ export default function UploadPage() {
 
   // ── Polling loop ───────────────────────────────────────────────────────────
 
-  const pollUntilDone = async (jobId: string, attemptId: string) => {
+  const pollUntilDone = async (
+    jobId: string,
+    attemptId: string,
+    signal: AbortSignal,
+  ) => {
     for (let i = 0; i < MAX_POLLS; i++) {
       await new Promise<void>((r) => setTimeout(r, POLL_INTERVAL_MS));
 
+      // Component unmounted or submission cancelled — stop cleanly.
+      if (signal.aborted) return;
+
       let status;
       try {
-        status = await getJobStatus(jobId);
-      } catch {
+        status = await getJobStatus(jobId, { signal });
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') return;
         // Transient network error — keep polling
         continue;
       }
@@ -162,6 +195,11 @@ export default function UploadPage() {
     e.preventDefault();
     if (!videoToSubmit) return;
 
+    // Abort any previous in-flight polling before starting a new submission.
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setSubmitState('uploading');
     setErrorMessage(null);
     setPollStatus(null);
@@ -170,8 +208,9 @@ export default function UploadPage() {
       const { job_id, attempt_id } = await uploadVideo(videoToSubmit, technique);
       setSubmitState('polling');
       setPollStatus('pending');
-      await pollUntilDone(job_id, attempt_id);
+      await pollUntilDone(job_id, attempt_id, controller.signal);
     } catch (err) {
+      if ((err as Error).name === 'AbortError') return;
       setSubmitState('failed');
       setErrorMessage(
         `Upload failed: ${err instanceof Error ? err.message : String(err)}`,
