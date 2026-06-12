@@ -1,9 +1,140 @@
 [
   {
     "technique": "front_kick",
-    "clip_id": "example_001",
-    "path": "data/staged/front_kick/example_001.mp4",
-    "accepted": false,
-    "notes": "Replace accepted:false with true after human review of the skeleton overlay."
+    "clip_id": "A63-Qe8LgCc",
+    "path": "data/staged/front_kick/A63-Qe8LgCc.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "front_kick",
+    "clip_id": "HbwytHgSwkY",
+    "path": "data/staged/front_kick/HbwytHgSwkY.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "front_kick",
+    "clip_id": "JvFCqQb9k9Y",
+    "path": "data/staged/front_kick/JvFCqQb9k9Y.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "front_kick",
+    "clip_id": "Pa52-js3Q2k",
+    "path": "data/staged/front_kick/Pa52-js3Q2k.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "front_kick",
+    "clip_id": "aWjz5NgzhTw",
+    "path": "data/staged/front_kick/aWjz5NgzhTw.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "front_kick",
+    "clip_id": "awmW9YXQqc4",
+    "path": "data/staged/front_kick/awmW9YXQqc4.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "front_kick",
+    "clip_id": "vEU03eBXicc",
+    "path": "data/staged/front_kick/vEU03eBXicc.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "front_kick",
+    "clip_id": "vYBgruVkvps",
+    "path": "data/staged/front_kick/vYBgruVkvps.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "roundhouse_kick",
+    "clip_id": "2A8pN3Kic1E",
+    "path": "data/staged/roundhouse_kick/2A8pN3Kic1E.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "roundhouse_kick",
+    "clip_id": "8fIblMEcMec",
+    "path": "data/staged/roundhouse_kick/8fIblMEcMec.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "roundhouse_kick",
+    "clip_id": "CDGhLVIqXEo",
+    "path": "data/staged/roundhouse_kick/CDGhLVIqXEo.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "roundhouse_kick",
+    "clip_id": "_LaFVBFpTNQ",
+    "path": "data/staged/roundhouse_kick/_LaFVBFpTNQ.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "roundhouse_kick",
+    "clip_id": "dGQuQbhrFKo",
+    "path": "data/staged/roundhouse_kick/dGQuQbhrFKo.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "roundhouse_kick",
+    "clip_id": "n7whaeolsDQ",
+    "path": "data/staged/roundhouse_kick/n7whaeolsDQ.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "straight_punch",
+    "clip_id": "DJiqfaCAKL8",
+    "path": "data/staged/straight_punch/DJiqfaCAKL8.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "straight_punch",
+    "clip_id": "KWOW2qc_QIE",
+    "path": "data/staged/straight_punch/KWOW2qc_QIE.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "straight_punch",
+    "clip_id": "LLJleYxvy50",
+    "path": "data/staged/straight_punch/LLJleYxvy50.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "straight_punch",
+    "clip_id": "ff1CGS6CqAU",
+    "path": "data/staged/straight_punch/ff1CGS6CqAU.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "straight_punch",
+    "clip_id": "h6mcWRalYDY",
+    "path": "data/staged/straight_punch/h6mcWRalYDY.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "straight_punch",
+    "clip_id": "o3k9NNAUwIE",
+    "path": "data/staged/straight_punch/o3k9NNAUwIE.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "straight_punch",
+    "clip_id": "pNOKAAfIX5w",
+    "path": "data/staged/straight_punch/pNOKAAfIX5w.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "straight_punch",
+    "clip_id": "tCKKVNw0bJQ",
+    "path": "data/staged/straight_punch/tCKKVNw0bJQ.mp4",
+    "accepted": true
+  },
+  {
+    "technique": "straight_punch",
+    "clip_id": "xed2RkBQTqc",
+    "path": "data/staged/straight_punch/xed2RkBQTqc.mp4",
+    "accepted": true
   }
 ]

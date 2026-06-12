@@ -1,6 +1,351 @@
 {
-  "source": "synthetic",
-  "generator": "scripts/generate_reference_templates.py",
-  "frames": 60,
-  "note": "Development stub — intentionally schematic. Replace with Phase 2 pipeline output (LIN-168)."
+  "source": "scraped-youtube",
+  "built_by": "scripts/build_reference_templates.py",
+  "technique": "roundhouse_kick",
+  "frames": 73,
+  "candidates": 6,
+  "accepted_reps": 24,
+  "medoid_rep": "n7whaeolsDQ#0",
+  "reps": {
+    "n7whaeolsDQ#1": {
+      "frames": 70,
+      "window": [
+        35,
+        46,
+        104
+      ],
+      "rep_seconds": 2.48,
+      "mirrored": false,
+      "mean_visibility": 0.966,
+      "mean_dtw_distance": 51.887
+    },
+    "CDGhLVIqXEo#0": {
+      "frames": 247,
+      "window": [
+        2694,
+        2818,
+        2940
+      ],
+      "rep_seconds": 4.22,
+      "mirrored": false,
+      "mean_visibility": 0.963,
+      "mean_dtw_distance": 85.262
+    },
+    "dGQuQbhrFKo#5": {
+      "frames": 109,
+      "window": [
+        28,
+        69,
+        136
+      ],
+      "rep_seconds": 2.97,
+      "mirrored": false,
+      "mean_visibility": 0.952,
+      "mean_dtw_distance": 56.961
+    },
+    "dGQuQbhrFKo#4": {
+      "frames": 120,
+      "window": [
+        896,
+        941,
+        1015
+      ],
+      "rep_seconds": 3.56,
+      "mirrored": false,
+      "mean_visibility": 0.951,
+      "mean_dtw_distance": 54.893
+    },
+    "8fIblMEcMec#2": {
+      "frames": 82,
+      "window": [
+        738,
+        802,
+        819
+      ],
+      "rep_seconds": 2.76,
+      "mirrored": false,
+      "mean_visibility": 0.931,
+      "mean_dtw_distance": 65.709
+    },
+    "8fIblMEcMec#1": {
+      "frames": 106,
+      "window": [
+        807,
+        871,
+        912
+      ],
+      "rep_seconds": 3.6,
+      "mirrored": false,
+      "mean_visibility": 0.917,
+      "mean_dtw_distance": 84.524
+    },
+    "8fIblMEcMec#0": {
+      "frames": 126,
+      "window": [
+        442,
+        545,
+        567
+      ],
+      "rep_seconds": 4.84,
+      "mirrored": true,
+      "mean_visibility": 0.823,
+      "mean_dtw_distance": 67.41
+    },
+    "8fIblMEcMec#3": {
+      "frames": 80,
+      "window": [
+        1082,
+        1099,
+        1161
+      ],
+      "rep_seconds": 2.84,
+      "mirrored": false,
+      "mean_visibility": 0.821,
+      "mean_dtw_distance": 64.789
+    },
+    "dGQuQbhrFKo#1": {
+      "frames": 152,
+      "window": [
+        761,
+        814,
+        912
+      ],
+      "rep_seconds": 4.55,
+      "mirrored": false,
+      "mean_visibility": 0.8,
+      "mean_dtw_distance": 67.311
+    },
+    "_LaFVBFpTNQ#0": {
+      "frames": 125,
+      "window": [
+        321,
+        372,
+        445
+      ],
+      "rep_seconds": 3.5,
+      "mirrored": false,
+      "mean_visibility": 0.79,
+      "mean_dtw_distance": 84.725
+    },
+    "dGQuQbhrFKo#3": {
+      "frames": 130,
+      "window": [
+        366,
+        486,
+        495
+      ],
+      "rep_seconds": 3.73,
+      "mirrored": false,
+      "mean_visibility": 0.767,
+      "mean_dtw_distance": 61.041
+    },
+    "n7whaeolsDQ#0": {
+      "frames": 73,
+      "window": [
+        93,
+        135,
+        165
+      ],
+      "rep_seconds": 2.52,
+      "mirrored": false,
+      "mean_visibility": 0.766,
+      "mean_dtw_distance": 50.894
+    },
+    "2A8pN3Kic1E#0": {
+      "frames": 129,
+      "window": [
+        1541,
+        1603,
+        1669
+      ],
+      "rep_seconds": 3.56,
+      "mirrored": true,
+      "mean_visibility": 0.738,
+      "mean_dtw_distance": 60.898
+    },
+    "2A8pN3Kic1E#5": {
+      "frames": 105,
+      "window": [
+        1409,
+        1477,
+        1513
+      ],
+      "rep_seconds": 2.9,
+      "mirrored": true,
+      "mean_visibility": 0.717,
+      "mean_dtw_distance": 59.312
+    },
+    "_LaFVBFpTNQ#2": {
+      "frames": 150,
+      "window": [
+        68,
+        105,
+        217
+      ],
+      "rep_seconds": 4.36,
+      "mirrored": true,
+      "mean_visibility": 0.713,
+      "mean_dtw_distance": 63.733
+    },
+    "CDGhLVIqXEo#1": {
+      "frames": 201,
+      "window": [
+        1266,
+        1348,
+        1466
+      ],
+      "rep_seconds": 3.36,
+      "mirrored": false,
+      "mean_visibility": 0.705,
+      "mean_dtw_distance": 61.088
+    },
+    "2A8pN3Kic1E#2": {
+      "frames": 150,
+      "window": [
+        889,
+        966,
+        1038
+      ],
+      "rep_seconds": 4.13,
+      "mirrored": true,
+      "mean_visibility": 0.702,
+      "mean_dtw_distance": 63.111
+    },
+    "dGQuQbhrFKo#0": {
+      "frames": 62,
+      "window": [
+        467,
+        501,
+        528
+      ],
+      "rep_seconds": 1.68,
+      "mirrored": false,
+      "mean_visibility": 0.683,
+      "mean_dtw_distance": 56.271
+    },
+    "CDGhLVIqXEo#2": {
+      "frames": 218,
+      "window": [
+        1083,
+        1180,
+        1300
+      ],
+      "rep_seconds": 3.62,
+      "mirrored": false,
+      "mean_visibility": 0.623,
+      "mean_dtw_distance": 61.849
+    },
+    "_LaFVBFpTNQ#1": {
+      "frames": 125,
+      "window": [
+        210,
+        259,
+        334
+      ],
+      "rep_seconds": 3.63,
+      "mirrored": false,
+      "mean_visibility": 0.617,
+      "mean_dtw_distance": 65.27
+    },
+    "dGQuQbhrFKo#2": {
+      "frames": 66,
+      "window": [
+        1039,
+        1070,
+        1104
+      ],
+      "rep_seconds": 1.91,
+      "mirrored": false,
+      "mean_visibility": 0.603,
+      "mean_dtw_distance": 54.295
+    },
+    "2A8pN3Kic1E#4": {
+      "frames": 121,
+      "window": [
+        791,
+        864,
+        911
+      ],
+      "rep_seconds": 3.3,
+      "mirrored": true,
+      "mean_visibility": 0.596,
+      "mean_dtw_distance": 64.296
+    },
+    "_LaFVBFpTNQ#3": {
+      "frames": 45,
+      "window": [
+        469,
+        482,
+        513
+      ],
+      "rep_seconds": 1.25,
+      "mirrored": true,
+      "mean_visibility": 0.582,
+      "mean_dtw_distance": 53.979
+    },
+    "2A8pN3Kic1E#1": {
+      "frames": 92,
+      "window": [
+        562,
+        604,
+        653
+      ],
+      "rep_seconds": 2.54,
+      "mirrored": true,
+      "mean_visibility": 0.572,
+      "mean_dtw_distance": 56.957
+    }
+  },
+  "rejected": {
+    "2A8pN3Kic1E": {
+      "low landmark visibility": 2
+    },
+    "8fIblMEcMec": {
+      "low landmark visibility": 1,
+      "overlaps an already-harvested rep": 3
+    },
+    "CDGhLVIqXEo": {
+      "low landmark visibility": 3,
+      "foot never rises": 2
+    },
+    "_LaFVBFpTNQ": {
+      "low landmark visibility": 1,
+      "overlaps an already-harvested rep": 3
+    },
+    "dGQuQbhrFKo": {
+      "foot never rises": 1,
+      "overlaps an already-harvested rep": 1
+    },
+    "n7whaeolsDQ": {
+      "overlaps an already-harvested rep": 2
+    }
+  },
+  "previews": [
+    "data/review_previews/n7whaeolsDQ#1.mp4",
+    "data/review_previews/CDGhLVIqXEo#0.mp4",
+    "data/review_previews/dGQuQbhrFKo#5.mp4",
+    "data/review_previews/dGQuQbhrFKo#4.mp4",
+    "data/review_previews/8fIblMEcMec#2.mp4",
+    "data/review_previews/8fIblMEcMec#1.mp4",
+    "data/review_previews/8fIblMEcMec#0.mp4",
+    "data/review_previews/8fIblMEcMec#3.mp4",
+    "data/review_previews/dGQuQbhrFKo#1.mp4",
+    "data/review_previews/_LaFVBFpTNQ#0.mp4",
+    "data/review_previews/dGQuQbhrFKo#3.mp4",
+    "data/review_previews/n7whaeolsDQ#0.mp4",
+    "data/review_previews/2A8pN3Kic1E#0.mp4",
+    "data/review_previews/2A8pN3Kic1E#5.mp4",
+    "data/review_previews/_LaFVBFpTNQ#2.mp4",
+    "data/review_previews/CDGhLVIqXEo#1.mp4",
+    "data/review_previews/2A8pN3Kic1E#2.mp4",
+    "data/review_previews/dGQuQbhrFKo#0.mp4",
+    "data/review_previews/CDGhLVIqXEo#2.mp4",
+    "data/review_previews/_LaFVBFpTNQ#1.mp4",
+    "data/review_previews/dGQuQbhrFKo#2.mp4",
+    "data/review_previews/2A8pN3Kic1E#4.mp4",
+    "data/review_previews/_LaFVBFpTNQ#3.mp4",
+    "data/review_previews/2A8pN3Kic1E#1.mp4"
+  ],
+  "human_review": "pending",
+  "note": "Template is the medoid rep of auto-screened scraped clips. Spot-check the previews in data/review_previews/ before treating scores as gold-standard."
 }

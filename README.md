@@ -49,7 +49,9 @@ Phase 2 includes a human review step: candidate reference clips' skeletons are s
 
 ## Status
 
-Pre-development. Architecture and scope confirmed; implementation not yet started.
+Phases 1–5 implemented (vision module, scoring engine, FastAPI backend, React dashboard; full test suite green). Phase 2 reference data is built from real scraped footage: per-technique templates in `backend/data/references/` are medoid reps selected from auto-screened YouTube clips (see each `.meta.json` for provenance). **Human review of the template previews in `data/review_previews/` is still pending** — spot-check them before treating scores as gold-standard. Remaining: phase 6 end-to-end verification with real user videos and an `ANTHROPIC_API_KEY`.
+
+To rebuild the reference library: `data_pipeline.cli fetch` → `scripts/build_staged_manifest.py` → `data_pipeline.cli extract` → `scripts/build_reference_templates.py`.
 
 ## Known limitations
 

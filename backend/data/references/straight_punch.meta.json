@@ -1,6 +1,353 @@
 {
-  "source": "synthetic",
-  "generator": "scripts/generate_reference_templates.py",
-  "frames": 60,
-  "note": "Development stub — intentionally schematic. Replace with Phase 2 pipeline output (LIN-168)."
+  "source": "scraped-youtube",
+  "built_by": "scripts/build_reference_templates.py",
+  "technique": "straight_punch",
+  "frames": 52,
+  "candidates": 9,
+  "accepted_reps": 24,
+  "medoid_rep": "KWOW2qc_QIE#0",
+  "reps": {
+    "ff1CGS6CqAU#4": {
+      "frames": 118,
+      "window": [
+        698,
+        743,
+        815
+      ],
+      "rep_seconds": 3.64,
+      "mirrored": true,
+      "mean_visibility": 0.995,
+      "mean_dtw_distance": 29.804
+    },
+    "KWOW2qc_QIE#3": {
+      "frames": 126,
+      "window": [
+        920,
+        995,
+        1045
+      ],
+      "rep_seconds": 3.47,
+      "mirrored": false,
+      "mean_visibility": 0.984,
+      "mean_dtw_distance": 29.818
+    },
+    "KWOW2qc_QIE#0": {
+      "frames": 52,
+      "window": [
+        1561,
+        1585,
+        1612
+      ],
+      "rep_seconds": 1.42,
+      "mirrored": false,
+      "mean_visibility": 0.979,
+      "mean_dtw_distance": 25.481
+    },
+    "h6mcWRalYDY#4": {
+      "frames": 101,
+      "window": [
+        1142,
+        1186,
+        1242
+      ],
+      "rep_seconds": 3.53,
+      "mirrored": false,
+      "mean_visibility": 0.979,
+      "mean_dtw_distance": 40.827
+    },
+    "KWOW2qc_QIE#2": {
+      "frames": 100,
+      "window": [
+        1300,
+        1352,
+        1399
+      ],
+      "rep_seconds": 2.74,
+      "mirrored": false,
+      "mean_visibility": 0.978,
+      "mean_dtw_distance": 27.277
+    },
+    "KWOW2qc_QIE#1": {
+      "frames": 49,
+      "window": [
+        1751,
+        1795,
+        1799
+      ],
+      "rep_seconds": 1.39,
+      "mirrored": false,
+      "mean_visibility": 0.977,
+      "mean_dtw_distance": 25.567
+    },
+    "KWOW2qc_QIE#4": {
+      "frames": 145,
+      "window": [
+        618,
+        694,
+        762
+      ],
+      "rep_seconds": 3.96,
+      "mirrored": true,
+      "mean_visibility": 0.972,
+      "mean_dtw_distance": 36.31
+    },
+    "ff1CGS6CqAU#6": {
+      "frames": 69,
+      "window": [
+        6,
+        35,
+        74
+      ],
+      "rep_seconds": 1.97,
+      "mirrored": true,
+      "mean_visibility": 0.971,
+      "mean_dtw_distance": 28.323
+    },
+    "o3k9NNAUwIE#2": {
+      "frames": 51,
+      "window": [
+        1021,
+        1046,
+        1071
+      ],
+      "rep_seconds": 1.76,
+      "mirrored": true,
+      "mean_visibility": 0.967,
+      "mean_dtw_distance": 30.345
+    },
+    "ff1CGS6CqAU#1": {
+      "frames": 66,
+      "window": [
+        353,
+        371,
+        418
+      ],
+      "rep_seconds": 1.87,
+      "mirrored": true,
+      "mean_visibility": 0.964,
+      "mean_dtw_distance": 28.408
+    },
+    "o3k9NNAUwIE#0": {
+      "frames": 63,
+      "window": [
+        427,
+        450,
+        489
+      ],
+      "rep_seconds": 2.18,
+      "mirrored": true,
+      "mean_visibility": 0.964,
+      "mean_dtw_distance": 28.996
+    },
+    "KWOW2qc_QIE#5": {
+      "frames": 60,
+      "window": [
+        810,
+        841,
+        869
+      ],
+      "rep_seconds": 1.75,
+      "mirrored": false,
+      "mean_visibility": 0.962,
+      "mean_dtw_distance": 28.393
+    },
+    "o3k9NNAUwIE#1": {
+      "frames": 32,
+      "window": [
+        819,
+        836,
+        850
+      ],
+      "rep_seconds": 1.13,
+      "mirrored": true,
+      "mean_visibility": 0.96,
+      "mean_dtw_distance": 28.132
+    },
+    "h6mcWRalYDY#2": {
+      "frames": 107,
+      "window": [
+        1225,
+        1330,
+        1331
+      ],
+      "rep_seconds": 4.07,
+      "mirrored": true,
+      "mean_visibility": 0.94,
+      "mean_dtw_distance": 45.082
+    },
+    "LLJleYxvy50#1": {
+      "frames": 145,
+      "window": [
+        350,
+        420,
+        494
+      ],
+      "rep_seconds": 4.32,
+      "mirrored": false,
+      "mean_visibility": 0.937,
+      "mean_dtw_distance": 45.689
+    },
+    "ff1CGS6CqAU#2": {
+      "frames": 98,
+      "window": [
+        1334,
+        1385,
+        1431
+      ],
+      "rep_seconds": 2.92,
+      "mirrored": true,
+      "mean_visibility": 0.931,
+      "mean_dtw_distance": 47.969
+    },
+    "ff1CGS6CqAU#0": {
+      "frames": 85,
+      "window": [
+        464,
+        526,
+        548
+      ],
+      "rep_seconds": 2.38,
+      "mirrored": true,
+      "mean_visibility": 0.929,
+      "mean_dtw_distance": 31.08
+    },
+    "ff1CGS6CqAU#3": {
+      "frames": 148,
+      "window": [
+        1194,
+        1240,
+        1341
+      ],
+      "rep_seconds": 4.56,
+      "mirrored": false,
+      "mean_visibility": 0.925,
+      "mean_dtw_distance": 38.803
+    },
+    "ff1CGS6CqAU#5": {
+      "frames": 140,
+      "window": [
+        1015,
+        1091,
+        1154
+      ],
+      "rep_seconds": 4.25,
+      "mirrored": true,
+      "mean_visibility": 0.925,
+      "mean_dtw_distance": 31.231
+    },
+    "tCKKVNw0bJQ#2": {
+      "frames": 145,
+      "window": [
+        1330,
+        1407,
+        1474
+      ],
+      "rep_seconds": 4.09,
+      "mirrored": true,
+      "mean_visibility": 0.925,
+      "mean_dtw_distance": 38.634
+    },
+    "h6mcWRalYDY#0": {
+      "frames": 61,
+      "window": [
+        1041,
+        1072,
+        1101
+      ],
+      "rep_seconds": 2.1,
+      "mirrored": true,
+      "mean_visibility": 0.917,
+      "mean_dtw_distance": 30.324
+    },
+    "tCKKVNw0bJQ#0": {
+      "frames": 100,
+      "window": [
+        192,
+        254,
+        291
+      ],
+      "rep_seconds": 2.94,
+      "mirrored": true,
+      "mean_visibility": 0.91,
+      "mean_dtw_distance": 30.62
+    },
+    "pNOKAAfIX5w#2": {
+      "frames": 143,
+      "window": [
+        766,
+        843,
+        908
+      ],
+      "rep_seconds": 4.22,
+      "mirrored": false,
+      "mean_visibility": 0.909,
+      "mean_dtw_distance": 45.432
+    },
+    "pNOKAAfIX5w#1": {
+      "frames": 136,
+      "window": [
+        885,
+        946,
+        1020
+      ],
+      "rep_seconds": 3.76,
+      "mirrored": false,
+      "mean_visibility": 0.894,
+      "mean_dtw_distance": 51.168
+    }
+  },
+  "rejected": {
+    "DJiqfaCAKL8": {
+      "pose undetected around peak": 2,
+      "overlaps an already-harvested rep": 1,
+      "low landmark visibility": 1
+    },
+    "KWOW2qc_QIE": {
+      "pose undetected around peak": 2
+    },
+    "LLJleYxvy50": {
+      "pose undetected around peak": 2
+    },
+    "ff1CGS6CqAU": {
+      "overlaps an already-harvested rep": 1
+    },
+    "h6mcWRalYDY": {
+      "overlaps an already-harvested rep": 3
+    },
+    "pNOKAAfIX5w": {
+      "pose undetected around peak": 1,
+      "overlaps an already-harvested rep": 3
+    },
+    "xed2RkBQTqc": {
+      "pose undetected around peak": 3
+    }
+  },
+  "previews": [
+    "data/review_previews/ff1CGS6CqAU#4.mp4",
+    "data/review_previews/KWOW2qc_QIE#3.mp4",
+    "data/review_previews/KWOW2qc_QIE#0.mp4",
+    "data/review_previews/h6mcWRalYDY#4.mp4",
+    "data/review_previews/KWOW2qc_QIE#2.mp4",
+    "data/review_previews/KWOW2qc_QIE#1.mp4",
+    "data/review_previews/KWOW2qc_QIE#4.mp4",
+    "data/review_previews/ff1CGS6CqAU#6.mp4",
+    "data/review_previews/o3k9NNAUwIE#2.mp4",
+    "data/review_previews/ff1CGS6CqAU#1.mp4",
+    "data/review_previews/o3k9NNAUwIE#0.mp4",
+    "data/review_previews/KWOW2qc_QIE#5.mp4",
+    "data/review_previews/o3k9NNAUwIE#1.mp4",
+    "data/review_previews/h6mcWRalYDY#2.mp4",
+    "data/review_previews/LLJleYxvy50#1.mp4",
+    "data/review_previews/ff1CGS6CqAU#2.mp4",
+    "data/review_previews/ff1CGS6CqAU#0.mp4",
+    "data/review_previews/ff1CGS6CqAU#3.mp4",
+    "data/review_previews/ff1CGS6CqAU#5.mp4",
+    "data/review_previews/tCKKVNw0bJQ#2.mp4",
+    "data/review_previews/h6mcWRalYDY#0.mp4",
+    "data/review_previews/tCKKVNw0bJQ#0.mp4",
+    "data/review_previews/pNOKAAfIX5w#2.mp4",
+    "data/review_previews/pNOKAAfIX5w#1.mp4"
+  ],
+  "human_review": "pending",
+  "note": "Template is the medoid rep of auto-screened scraped clips. Spot-check the previews in data/review_previews/ before treating scores as gold-standard."
 }

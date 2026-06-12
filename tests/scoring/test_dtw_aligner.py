@@ -289,17 +289,34 @@ class TestSyntheticTemplateWarning:
         ), "Unexpected SYNTHETIC warning when no .meta.json exists"
 
     @pytest.mark.parametrize("slug", ("front_kick", "roundhouse_kick", "straight_punch"))
-    def test_committed_templates_are_marked_synthetic(self, slug: str):
-        """The committed development stubs ship with .meta.json marking source='synthetic'."""
+    def test_committed_templates_are_real_and_consistent(self, slug: str):
+        """Committed templates come from the Phase 2 pipeline, not synthetic stubs.
+
+        Each template must ship a .meta.json sidecar whose source is no longer
+        'synthetic' (replacing a real template with a stub is a regression),
+        and the .npy array must match the (frames, 99) contract and the frame
+        count recorded in its own metadata.
+        """
+        import json
+
         meta_path = _REFERENCES_DIR / f"{slug}.meta.json"
         assert meta_path.exists(), (
             f"Missing sidecar: {meta_path}. "
-            f"Run scripts/generate_reference_templates.py to regenerate it."
+            f"Run scripts/build_reference_templates.py to regenerate it."
         )
-        import json
         meta = json.loads(meta_path.read_text())
-        assert meta.get("source") == "synthetic", (
-            f"{slug}.meta.json: expected source='synthetic', got {meta.get('source')!r}"
+        assert meta.get("source") != "synthetic", (
+            f"{slug}.meta.json: source is 'synthetic' — the real Phase 2 "
+            f"template was replaced by a development stub."
+        )
+
+        template = load_reference_template(slug)
+        assert template.ndim == 2 and template.shape[1] == 99, (
+            f"{slug}.npy: expected shape (frames, 99), got {template.shape}"
+        )
+        assert template.shape[0] == meta.get("frames"), (
+            f"{slug}: .npy has {template.shape[0]} frames but .meta.json "
+            f"records {meta.get('frames')}"
         )
 
 

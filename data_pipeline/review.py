@@ -110,15 +110,28 @@ def _load_landmarks(npz_path: Path) -> tuple[np.ndarray, str]:
     """
     Load landmark array and technique label from an .npz file.
 
-    Expected keys in the archive:
-      landmarks : float32 array of shape (T, 33, 3) or (T, 33, 4)
-      technique : scalar string  (e.g. "front_kick")
-
-    Falls back gracefully if the 'technique' key is absent.
+    Accepts both archive layouts in use:
+      - extractor output (data_pipeline.extractor.process_clip):
+        ``coords`` (T, 33, 3) + ``visibility`` + ``timestamps``; the technique
+        is the name of the parent directory (data/landmarks/<technique>/).
+      - legacy/explicit layout: ``landmarks`` (T, 33, >=3) and optional
+        ``technique`` scalar string.
     """
     data = np.load(npz_path, allow_pickle=False)
-    landmarks: np.ndarray = data["landmarks"]  # (T, 33, >=3)
-    technique: str = str(data["technique"]) if "technique" in data else "unknown"
+    if "landmarks" in data:
+        landmarks: np.ndarray = data["landmarks"]  # (T, 33, >=3)
+    elif "coords" in data:
+        landmarks = data["coords"]  # (T, 33, 3) — extractor output
+    else:
+        raise KeyError(
+            f"{npz_path} has neither 'landmarks' nor 'coords' arrays; "
+            f"found keys: {sorted(data.keys())}"
+        )
+    if "technique" in data:
+        technique = str(data["technique"])
+    else:
+        # Extractor writes data/landmarks/<technique>/<clip_id>.npz.
+        technique = npz_path.parent.name or "unknown"
     return landmarks, technique
 
 
