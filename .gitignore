@@ -57,3 +57,25 @@ htmlcov/
 
 # Generated landmark output files (run scripts/extract_landmarks.py to regenerate)
 data/*_landmarks.json
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# SQLite databases
+*.db
+*.sqlite3
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+
+# Uploads / media
+uploads/
