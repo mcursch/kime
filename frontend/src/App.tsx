@@ -1,8 +1,17 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import UploadPage from './pages/UploadPage'
+import ResultsPage from './pages/ResultsPage'
+import HistoryPage from './pages/HistoryPage'
+
 function App() {
   return (
-    <main>
-      <h1>Kime</h1>
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<UploadPage />} />
+        <Route path="/history" element={<HistoryPage />} />
+        <Route path="/:attemptId" element={<ResultsPage />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
