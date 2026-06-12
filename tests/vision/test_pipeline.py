@@ -55,10 +55,13 @@ def _make_standing_skeleton() -> np.ndarray:
 def _make_front_kick_sequence(n_frames: int = 30) -> np.ndarray:
     """Synthesise an (N, 33, 3) sequence simulating a right-leg front kick.
 
-    The right ankle (landmark 28) traces a smooth arc: it lifts during the
-    chamber phase, reaches its highest point at the extension phase, then
-    returns to the starting position.  All other landmarks stay at their
-    standing-pose values to keep the sequence anatomically plausible.
+    The right ankle (landmark 28) rises monotonically from its resting
+    position toward full extension via a logistic (sigmoid) profile.  The
+    velocity (derivative of position) is a smooth bell-shaped curve whose
+    peak falls at the interior midpoint of the sequence — an index that
+    ``scipy.signal.find_peaks`` reliably detects after Savitzky-Golay
+    smoothing.  All other landmarks stay at their standing-pose values to
+    keep the sequence anatomically plausible.
     """
     base = _make_standing_skeleton()
     seq = np.tile(base[np.newaxis, :, :], (n_frames, 1, 1))  # (N, 33, 3)
