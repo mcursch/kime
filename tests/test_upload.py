@@ -166,6 +166,37 @@ class TestUploadEndpoint:
         )
         assert response.status_code == 202
 
+    def test_path_traversal_filename_is_contained_in_upload_dir(
+        self, client: TestClient, tmp_upload_dir: Path
+    ) -> None:
+        """A filename containing path separators must not escape the upload dir.
+
+        A malicious client could supply a filename like ``x/../../evil.sh`` to
+        write a file outside UPLOAD_DIR.  The server must strip directory
+        components so the saved file stays inside the configured upload
+        directory.
+        """
+        response = client.post(
+            "/upload",
+            files={
+                "file": (
+                    "x/../../evil.sh",
+                    io.BytesIO(_mp4_bytes()),
+                    "video/mp4",
+                )
+            },
+            data={"technique": "front_kick"},
+        )
+        assert response.status_code == 202
+        saved = list(tmp_upload_dir.iterdir())
+        assert len(saved) == 1, "Expected exactly one file saved"
+        # The file must reside directly inside the upload dir, not somewhere
+        # that has escaped via path traversal.
+        saved_path = saved[0].resolve()
+        assert saved_path.parent == tmp_upload_dir.resolve(), (
+            f"File was written outside the upload directory: {saved_path}"
+        )
+
     def test_other_video_types_accepted(self, client: TestClient) -> None:
         for mime in ("video/quicktime", "video/x-msvideo", "video/webm"):
             response = client.post(

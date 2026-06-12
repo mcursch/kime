@@ -70,7 +70,10 @@ async def upload_video(
     upload_dir.mkdir(parents=True, exist_ok=True)
 
     # Use a UUID prefix to avoid filename collisions.
-    safe_filename = f"{uuid.uuid4().hex}_{file.filename or 'upload'}"
+    # Strip any directory components from the client-supplied filename to
+    # prevent path traversal attacks (e.g. "x/../../evil.sh").
+    _base_name = Path(file.filename).name if file.filename else ""
+    safe_filename = f"{uuid.uuid4().hex}_{_base_name or 'upload'}"
     dest: Path = upload_dir / safe_filename
 
     dest.write_bytes(contents)
