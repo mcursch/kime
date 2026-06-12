@@ -125,6 +125,7 @@ class TestPreprocessResultDataclass:
         assert "chamber" in fields, "missing field: chamber"
         assert "extension" in fields, "missing field: extension"
         assert "retraction" in fields, "missing field: retraction"
+        assert "camera_angle_ok" in fields, "missing field: camera_angle_ok"
 
     def test_field_types(self):
         import typing
@@ -138,6 +139,7 @@ class TestPreprocessResultDataclass:
         assert hints["chamber"] is int
         assert hints["extension"] is int
         assert hints["retraction"] is int
+        assert hints["camera_angle_ok"] is bool
 
 
 # ---------------------------------------------------------------------------
@@ -214,6 +216,29 @@ class TestPreprocessRoundTrip:
         seq = _make_front_kick_sequence(n_frames=10)
         result = preprocess(seq, "front_kick")
         assert isinstance(result, PreprocessResult)
+
+    def test_camera_angle_ok_is_bool(self):
+        """camera_angle_ok must be a plain Python bool."""
+        seq = _make_front_kick_sequence(n_frames=30)
+        result = preprocess(seq, "front_kick")
+        assert isinstance(result.camera_angle_ok, bool)
+
+    def test_frontal_skeleton_camera_angle_ok_true(self):
+        """The synthetic standing skeleton has wide hips → camera_angle_ok True."""
+        seq = _make_front_kick_sequence(n_frames=30)
+        result = preprocess(seq, "front_kick")
+        assert result.camera_angle_ok is True
+
+    def test_sideways_skeleton_camera_angle_ok_false(self):
+        """A skeleton with nearly-coincident hips in XZ → camera_angle_ok False."""
+        # Build a sequence where hips have near-zero XZ separation (sideways filming)
+        base = _make_standing_skeleton().copy()
+        # Collapse both hips to the origin in XZ — only Y differs (degenerate)
+        base[23] = [0.0, 0.0, 0.0]  # left hip
+        base[24] = [0.005, 0.0, 0.0]  # right hip — only 0.005 apart in X
+        seq = np.tile(base[np.newaxis, :, :], (30, 1, 1))
+        result = preprocess(seq, "front_kick")
+        assert result.camera_angle_ok is False
 
 
 # ---------------------------------------------------------------------------

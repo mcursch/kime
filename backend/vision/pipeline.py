@@ -18,7 +18,12 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from backend.vision.normalize import canonical_facing, hip_center, torso_scale
+from backend.vision.normalize import (
+    canonical_facing,
+    check_camera_angle,
+    hip_center,
+    torso_scale,
+)
 from backend.vision.segment import find_rep_window
 from backend.vision.smooth import smooth_landmarks
 
@@ -34,12 +39,16 @@ class PreprocessResult:
         chamber: Frame index of the limb-chambered phase.
         extension: Frame index of maximum extension (impact point).
         retraction: Frame index where the limb has returned toward guard.
+        camera_angle_ok: False when the hip-vector XZ magnitude is too small,
+            indicating the subject was filmed from the side rather than the
+            front.  Scores produced from a sideways view are likely unreliable.
     """
 
     landmarks: np.ndarray
     chamber: int
     extension: int
     retraction: int
+    camera_angle_ok: bool
 
 
 def preprocess(
@@ -87,6 +96,12 @@ def preprocess(
     # --- Normalisation ---
     lm = hip_center(landmarks)
     lm = torso_scale(lm)
+
+    # Camera-angle quality gate: check before canonical_facing so we operate on
+    # the raw (unrotated) scaled data, though the result is identical either
+    # way because canonical_facing preserves XZ magnitude.
+    camera_angle_ok = check_camera_angle(lm)
+
     lm = canonical_facing(lm)
 
     # --- Smoothing ---
@@ -100,4 +115,5 @@ def preprocess(
         chamber=chamber,
         extension=extension,
         retraction=retraction,
+        camera_angle_ok=camera_angle_ok,
     )

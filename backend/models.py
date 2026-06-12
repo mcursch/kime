@@ -12,6 +12,7 @@ import enum
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     Enum,
     Float,
@@ -134,6 +135,10 @@ class AnalysisResult(Base):
     # Set to ``/uploads/<filename>`` when the upload has a storage_path; NULL
     # otherwise (e.g. jobs created without an associated Upload row).
     video_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    # False when the vision pipeline detected a sideways filming angle (low
+    # hip-vector XZ magnitude), meaning scores may be unreliable.  NULL for
+    # jobs where no vision data was available (reference-template fallback).
+    camera_angle_ok: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     job: Mapped["Job"] = relationship("Job", back_populates="result")

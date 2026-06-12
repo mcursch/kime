@@ -157,6 +157,17 @@ export default function ResultsPage() {
     <main>
       <h1>Results</h1>
 
+      {result.camera_angle_ok === false && (
+        <section aria-label="Camera angle warning" role="alert">
+          <p style={{ color: '#b45309', background: '#fef3c7', padding: '0.75rem', borderRadius: '0.375rem' }}>
+            ⚠️ <strong>Poor camera angle detected.</strong> The subject appears
+            to have been filmed from the side rather than the front. Scores may
+            be unreliable — please re-record from a frontal or near-frontal
+            angle for accurate feedback.
+          </p>
+        </section>
+      )}
+
       <section aria-label="Overall score">
         <p>
           <strong>{techniqueLabel}</strong> — Overall score:{' '}

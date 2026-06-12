@@ -19,6 +19,54 @@ RIGHT_SHOULDER = 12
 LEFT_HIP = 23
 RIGHT_HIP = 24
 
+# Minimum mean XZ hip-vector magnitude (in torso-scale units) below which the
+# subject is considered to be filmed from the side rather than the front/back.
+# At torso-scale == 1, a frontal view yields a hip-width of ~0.4; sideways
+# views produce values close to zero because the monocular depth (Z) estimate
+# is unreliable and the left/right hip landmarks collapse to the same X column.
+_CAMERA_ANGLE_THRESHOLD = 0.15
+
+
+def check_camera_angle(
+    frames: np.ndarray,
+    threshold: float = _CAMERA_ANGLE_THRESHOLD,
+) -> bool:
+    """Return *True* when the camera angle is acceptable for scoring.
+
+    Computes the XZ-plane magnitude of the hip vector (right_hip − left_hip)
+    for every frame and checks whether the mean exceeds *threshold*.  A low
+    mean magnitude indicates that both hip landmarks are collapsing to the same
+    position in the XZ plane — the hallmark of a sideways filming angle where
+    MediaPipe's monocular depth is unreliable.
+
+    This check should be applied **after** :func:`torso_scale` so that the
+    magnitude is expressed in normalised torso-length units and is therefore
+    independent of subject size or camera distance.  Because :func:`canonical_facing`
+    performs a rotation around the Y-axis it preserves XZ magnitude, so the
+    check may equivalently be applied before or after that step.
+
+    Parameters
+    ----------
+    frames : np.ndarray, shape (N_frames, 33, 3)
+        Landmark coordinates (should be torso-scaled before calling).
+    threshold : float
+        Minimum acceptable mean XZ hip-vector magnitude.  Defaults to
+        :data:`_CAMERA_ANGLE_THRESHOLD` (0.15 torso-lengths).
+
+    Returns
+    -------
+    bool
+        ``True``  — camera angle is acceptable (frontal or near-frontal).
+        ``False`` — subject appears to be filmed sideways; scores may be
+                    unreliable.
+    """
+    frames = np.asarray(frames, dtype=float)
+    hip_vec = frames[:, RIGHT_HIP, :] - frames[:, LEFT_HIP, :]
+    dx = hip_vec[:, 0]
+    dz = hip_vec[:, 2]
+    xz_mag = np.sqrt(dx ** 2 + dz ** 2)
+    return bool(np.mean(xz_mag) >= threshold)
+
 
 def hip_center(frames: np.ndarray) -> np.ndarray:
     """Translate each frame so the hip midpoint is at the origin.

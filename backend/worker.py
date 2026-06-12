@@ -568,6 +568,13 @@ def run_analysis(job_id: int, anthropic_client=None) -> None:
             if job.upload and job.upload.storage_path:
                 video_url = f"/uploads/{Path(job.upload.storage_path).name}"
 
+            # camera_angle_ok comes from the preprocessing pipeline when a
+            # real video was processed; None when the reference template was
+            # used (no actual footage to assess).
+            _camera_angle_ok: bool | None = (
+                _prep.camera_angle_ok if _prep is not None else None
+            )
+
             analysis_result = AnalysisResult(
                 job_id=job.job_id,
                 scores=json.dumps(
@@ -577,6 +584,7 @@ def run_analysis(job_id: int, anthropic_client=None) -> None:
                 keyframe_paths=json.dumps(_keyframe_paths_list),
                 overall_score=int(rep_score.overall * 100),
                 video_url=video_url,
+                camera_angle_ok=_camera_angle_ok,
                 created_at=datetime.utcnow(),
             )
             db.add(analysis_result)

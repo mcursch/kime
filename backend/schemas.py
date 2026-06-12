@@ -40,6 +40,10 @@ class AnalysisResultResponse(BaseModel):
     # None when the job was created without an associated upload or when the
     # upload has no storage path (e.g. tests that bypass the upload router).
     video_url: str | None = None
+    # False when the vision pipeline detected a sideways filming angle (low
+    # hip-vector XZ magnitude).  None for jobs that used the reference-template
+    # fallback (no real video data).  Frontend should warn the user when False.
+    camera_angle_ok: bool | None = None
 
     model_config = {"from_attributes": True}
 
@@ -71,6 +75,7 @@ class AnalysisResultResponse(BaseModel):
                 "feedback": result.feedback if result else None,
                 "criteria": metric_deltas if metric_deltas else None,
                 "video_url": result.video_url if result else None,
+                "camera_angle_ok": result.camera_angle_ok if result else None,
             }
             return out
         return data

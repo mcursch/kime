@@ -15,6 +15,7 @@ from backend.vision.normalize import (
     RIGHT_HIP,
     RIGHT_SHOULDER,
     canonical_facing,
+    check_camera_angle,
     hip_center,
     torso_scale,
 )
@@ -292,6 +293,102 @@ class TestCanonicalFacing:
         result = canonical_facing(frames)
         hip_x = result[:, RIGHT_HIP, 0] - result[:, LEFT_HIP, 0]
         assert np.all(hip_x > 0)
+
+
+# ---------------------------------------------------------------------------
+# check_camera_angle tests
+# ---------------------------------------------------------------------------
+
+
+def _make_frontal_frames(n_frames: int = 10) -> np.ndarray:
+    """Return frames where hips are spread in X (frontal view).
+
+    After torso_scale the hip-to-hip XZ magnitude should be well above 0.15.
+    """
+    frames = np.zeros((n_frames, N_LANDMARKS, 3))
+    # Hips separated by 0.4 in X, zero Z separation
+    frames[:, LEFT_HIP, :] = [-0.2, 0.0, 0.0]
+    frames[:, RIGHT_HIP, :] = [0.2, 0.0, 0.0]
+    # Shoulders above hips (gives a non-zero torso length for torso_scale)
+    frames[:, LEFT_SHOULDER, :] = [-0.2, 1.0, 0.0]
+    frames[:, RIGHT_SHOULDER, :] = [0.2, 1.0, 0.0]
+    return frames
+
+
+def _make_sideways_frames(n_frames: int = 10) -> np.ndarray:
+    """Return frames where hips are nearly coincident in X (sideways view).
+
+    The left and right hip landmarks share the same X position; only Z differs
+    (depth), but since the frames are *not* torso-scaled the XZ magnitude is
+    already tiny — well below the 0.15 threshold.
+    """
+    frames = np.zeros((n_frames, N_LANDMARKS, 3))
+    # Hips at nearly the same X, separated only in Z (shot from the side)
+    frames[:, LEFT_HIP, :] = [0.0, 0.0, -0.05]
+    frames[:, RIGHT_HIP, :] = [0.0, 0.0, 0.05]
+    # Shoulders above hips
+    frames[:, LEFT_SHOULDER, :] = [0.0, 1.0, -0.05]
+    frames[:, RIGHT_SHOULDER, :] = [0.0, 1.0, 0.05]
+    return frames
+
+
+class TestCheckCameraAngle:
+    def test_frontal_view_returns_true(self):
+        """Wide hip separation in X (frontal view) should be accepted."""
+        frames = _make_frontal_frames()
+        # Apply hip_center + torso_scale to match pipeline usage
+        frames = torso_scale(hip_center(frames))
+        assert check_camera_angle(frames) is True
+
+    def test_sideways_view_returns_false(self):
+        """Near-zero XZ hip separation (sideways view) should be rejected."""
+        # Construct frames where hip XZ magnitude is clearly below threshold
+        frames = np.zeros((10, N_LANDMARKS, 3))
+        # Hips collapsed to nearly the same XZ position
+        frames[:, LEFT_HIP, :] = [0.0, 0.0, 0.0]
+        frames[:, RIGHT_HIP, :] = [0.01, 0.0, 0.0]  # only 0.01 separation
+        # Give a non-degenerate torso so torso_scale doesn't divide by zero
+        frames[:, LEFT_SHOULDER, :] = [0.0, 1.0, 0.0]
+        frames[:, RIGHT_SHOULDER, :] = [0.0, 1.0, 0.0]
+        frames = torso_scale(hip_center(frames))
+        assert check_camera_angle(frames) is False
+
+    def test_returns_bool(self):
+        """Return value must be a plain Python bool."""
+        frames = _make_frontal_frames()
+        result = check_camera_angle(frames)
+        assert isinstance(result, bool)
+
+    def test_custom_threshold_accepted(self):
+        """A very low threshold causes even a sideways sequence to pass."""
+        frames = np.zeros((5, N_LANDMARKS, 3))
+        frames[:, LEFT_HIP, :] = [0.0, 0.0, 0.0]
+        frames[:, RIGHT_HIP, :] = [0.05, 0.0, 0.0]
+        frames[:, LEFT_SHOULDER, :] = [0.0, 1.0, 0.0]
+        frames[:, RIGHT_SHOULDER, :] = [0.0, 1.0, 0.0]
+        frames = torso_scale(hip_center(frames))
+        # With a very low threshold the check should pass
+        assert check_camera_angle(frames, threshold=0.0) is True
+
+    def test_custom_threshold_rejected(self):
+        """A very high threshold causes even a frontal sequence to fail."""
+        frames = _make_frontal_frames()
+        frames = torso_scale(hip_center(frames))
+        # With an impossibly high threshold the check should fail
+        assert check_camera_angle(frames, threshold=999.0) is False
+
+    def test_accepts_list_input(self):
+        """Should work with Python lists as well as NumPy arrays."""
+        frames = _make_frontal_frames().tolist()
+        result = check_camera_angle(frames)
+        assert isinstance(result, bool)
+
+    def test_shape_of_frames_unchanged(self):
+        """check_camera_angle must not mutate the input array."""
+        frames = _make_frontal_frames()
+        original = frames.copy()
+        check_camera_angle(frames)
+        np.testing.assert_array_equal(frames, original)
 
 
 # ---------------------------------------------------------------------------

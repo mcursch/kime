@@ -60,6 +60,12 @@ export interface AttemptResult {
   created_at: string;
   /** Optional video URL when the backend provides one. */
   video_url?: string;
+  /**
+   * False when the vision pipeline detected a sideways filming angle that may
+   * cause mis-scoring.  Null/undefined for jobs that used the reference-template
+   * fallback (no real video).  The UI should warn the user when this is false.
+   */
+  camera_angle_ok?: boolean | null;
 }
 
 /** Summary item from GET /history (HistoryItem). */
