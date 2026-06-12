@@ -90,6 +90,7 @@ export default function ResultsPage() {
 
   useEffect(() => {
     if (!id) return;
+    setWarningDismissed(false);
     setLoading(true);
     setError(null);
     fetchAttempt(id)
