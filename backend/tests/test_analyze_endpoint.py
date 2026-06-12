@@ -113,6 +113,37 @@ async def test_poll_eventually_returns_complete(fake_video_bytes: bytes) -> None
 
 
 @pytest.mark.asyncio
+async def test_poll_returns_error_when_extraction_fails(fake_video_bytes: bytes) -> None:
+    """GET /api/analyze/{job_id} returns status=error when extraction raises."""
+    with patch(
+        "backend.routers.analyze.extract_landmarks",
+        side_effect=RuntimeError("simulated extraction failure"),
+    ):
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            submit = await client.post(
+                "/api/analyze",
+                files={"file": ("kick.mp4", io.BytesIO(fake_video_bytes), "video/mp4")},
+            )
+            assert submit.status_code == 202
+            job_id = submit.json()["job_id"]
+
+            # Poll up to 5 seconds for a terminal state.
+            deadline = asyncio.get_event_loop().time() + 5.0
+            job_status = "pending"
+            while asyncio.get_event_loop().time() < deadline and job_status == "pending":
+                await asyncio.sleep(0.05)
+                poll = await client.get(f"/api/analyze/{job_id}")
+                assert poll.status_code == 200
+                job_status = poll.json()["status"]
+
+    assert job_status == "error"
+    body = poll.json()
+    assert "simulated extraction failure" in (body.get("error") or "")
+
+
+@pytest.mark.asyncio
 async def test_unknown_job_id_returns_404() -> None:
     """GET /api/analyze/{job_id} returns 404 for an unknown job_id."""
     async with AsyncClient(

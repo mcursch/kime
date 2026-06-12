@@ -111,12 +111,26 @@ async def submit_video(file: UploadFile) -> SubmitResponse:
     # never sees an unknown ID between submission and first status write.
     _jobs[job_id] = Job(job_id=job_id, status="pending")
 
-    asyncio.get_event_loop().run_in_executor(
+    loop = asyncio.get_running_loop()
+    future = loop.run_in_executor(
         None,  # default ThreadPoolExecutor
         _run_extraction,
         job_id,
         video_path,
     )
+
+    def _on_done(fut: asyncio.Future) -> None:  # type: ignore[type-arg]
+        """Surface any exception that escaped _run_extraction's try/except."""
+        exc = fut.exception()
+        if exc is not None:
+            logger.error(
+                "Unhandled exception in extraction future for job %s",
+                job_id,
+                exc_info=exc,
+            )
+            _jobs[job_id] = Job(job_id=job_id, status="error", error=str(exc))
+
+    future.add_done_callback(_on_done)
 
     return SubmitResponse(job_id=job_id)
 
