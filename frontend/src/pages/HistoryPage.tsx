@@ -9,11 +9,11 @@ const PAGE_SIZE = 10;
 // ---------------------------------------------------------------------------
 
 function TrendChart({ attempts }: { attempts: AttemptSummary[] }) {
-  if (attempts.length < 2) return null;
+  const sorted = [...attempts]
+    .filter((a): a is AttemptSummary & { overall_score: number } => a.overall_score !== null)
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
-  const sorted = [...attempts].sort(
-    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-  );
+  if (sorted.length < 2) return null;
 
   const width = 400;
   const height = 160;
@@ -137,7 +137,7 @@ export default function HistoryPage() {
             <li key={a.job_id}>
               <button type="button" onClick={() => navigate(`/${a.job_id}`)}>
                 {new Date(a.created_at).toLocaleDateString()} —{' '}
-                {a.technique.replace(/_/g, ' ')} — Score: {a.overall_score}
+                {a.technique.replace(/_/g, ' ')} — Score: {a.overall_score ?? '—'}
               </button>
             </li>
           ))}

@@ -131,7 +131,7 @@ export async function getJobStatus(jobId: number | string): Promise<JobStatusRes
  *
  * Calls GET /jobs/{job_id}/results where job_id is the UUID string column.
  *
- * @param jobId  The UUID job_id (from history or a UUID-based job).
+ * @param jobId  The job identifier (integer or UUID string) from history or a completed upload.
  * @returns      Scores, per-criterion breakdown, coaching feedback.
  */
 export async function getAttemptResult(jobId: string): Promise<AttemptResult> {
