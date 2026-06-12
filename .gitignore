@@ -1,5 +1,6 @@
 # Python
 __pycache__/
+**/__pycache__/
 *.py[cod]
 *.pyo
 *.pyd
@@ -53,3 +54,6 @@ htmlcov/
 
 # Logs
 *.log
+
+# Generated landmark output files (run scripts/extract_landmarks.py to regenerate)
+data/*_landmarks.json
