@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import pytest
 import pytest_asyncio
-from httpx import ASGITransport, AsyncClient
+from httpx2 import ASGITransport, AsyncClient
 
 from backend.main import app
 from backend.routers.analyze import _jobs
