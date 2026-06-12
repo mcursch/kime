@@ -6,7 +6,6 @@ python-multipart>=0.0.9
 python-magic>=0.4.27
 httpx2>=2.0.0
 pytest>=8.0.0
-pytest-anyio>=0.0.0
 # Kime backend dependencies
 anthropic>=0.34.0
 fastapi>=0.115.0
