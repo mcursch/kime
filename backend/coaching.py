@@ -120,4 +120,9 @@ def generate_feedback(scores: dict, client: anthropic.Anthropic) -> str:
         messages=[{"role": "user", "content": prompt}],
     )
 
+    if not message.content:
+        raise ValueError(
+            f"Anthropic API returned an empty content list "
+            f"(stop_reason={message.stop_reason!r})"
+        )
     return message.content[0].text

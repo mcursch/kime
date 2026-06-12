@@ -207,3 +207,16 @@ class TestGenerateFeedback:
         prompt = _extract_user_prompt(client)
         assert "Chamber: knee raised to hip height" in prompt
         assert "Impact: hip barely rotated" in prompt
+
+    def test_raises_value_error_on_empty_content(self):
+        """generate_feedback raises ValueError (not IndexError) when the API
+        returns a response with an empty content list."""
+        message = MagicMock()
+        message.content = []
+        message.stop_reason = "end_turn"
+
+        client = MagicMock(spec=anthropic.Anthropic)
+        client.messages.create.return_value = message
+
+        with pytest.raises(ValueError, match="empty content list"):
+            generate_feedback(SAMPLE_SCORES, client)
