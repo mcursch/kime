@@ -1,0 +1,9 @@
+[
+  {
+    "technique": "front_kick",
+    "clip_id": "example_001",
+    "path": "data/staged/front_kick/example_001.mp4",
+    "accepted": false,
+    "notes": "Replace accepted:false with true after human review of the skeleton overlay."
+  }
+]
