@@ -197,7 +197,7 @@ def _render_terminal(landmarks: np.ndarray, clip_id: str, technique: str) -> Non
         frame_xy[:, 1] = 1.0 - (frame_xy[:, 1] - y_min) / y_range
         art = _ascii_frame(frame_xy, width=60, height=22)
         # Move cursor up to overwrite previous frame (ANSI escape)
-        sys.stdout.write("\033[24A" if idx != indices[0] else "")
+        sys.stdout.write("\033[22A" if idx != indices[0] else "")
         sys.stdout.write(art + "\n")
         sys.stdout.flush()
         time.sleep(0.08)
@@ -269,7 +269,10 @@ def _approve(
     reviewer_email: str,
 ) -> None:
     """Copy the skeleton to templates/<technique>/ and update manifest.json."""
-    dest_dir = TEMPLATES_DIR / technique
+    # Sanitise: strip directory components so a crafted technique string such
+    # as "../../etc" cannot write outside TEMPLATES_DIR.
+    safe_technique = Path(technique).name or "unknown"
+    dest_dir = TEMPLATES_DIR / safe_technique
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest_path = dest_dir / npz_path.name
     shutil.copy2(npz_path, dest_path)
@@ -400,7 +403,12 @@ def run_review(
             except Exception as exc:
                 print(f"  ! Approve failed: {exc}")
         elif decision == "reject":
-            reason = _prompt_reason()
+            try:
+                reason = _prompt_reason()
+            except KeyboardInterrupt:
+                print("\n\nInterrupted — exiting review session.")
+                interrupted = True
+                break
             try:
                 _reject(npz_path, clip_id, reason)
             except Exception as exc:
@@ -439,10 +447,14 @@ def _prompt_decision(clip_id: str, technique: str) -> str:
 
 
 def _prompt_reason() -> str:
-    """Ask for a rejection reason; returns a default if empty."""
+    """Ask for a rejection reason; returns a default if empty.
+
+    KeyboardInterrupt is intentionally *not* caught here so it propagates
+    to the caller (run_review), which treats it as a clean exit signal.
+    """
     prompt = "  Rejection reason (press Enter to skip): "
     try:
         reason = input(prompt).strip()
-    except (EOFError, KeyboardInterrupt):
+    except EOFError:
         reason = ""
     return reason or "No reason given"

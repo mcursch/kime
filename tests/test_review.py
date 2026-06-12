@@ -453,6 +453,109 @@ class TestRunReviewIntegration(unittest.TestCase):
         rv.MANIFEST_PATH = orig_mp
 
 
+class TestApprovePathTraversal(unittest.TestCase):
+    """Malicious technique strings must not escape TEMPLATES_DIR."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_traversal_technique_stays_inside_templates_dir(self):
+        import data_pipeline.review as rv
+
+        templates_dir = self.tmp / "templates"
+        orig_td = rv.TEMPLATES_DIR
+        orig_mp = rv.MANIFEST_PATH
+        rv.TEMPLATES_DIR = templates_dir
+        rv.MANIFEST_PATH = templates_dir / "manifest.json"
+        try:
+            # A crafted technique value that tries to escape via "../"
+            malicious_technique = "../../evil_dir"
+            npz = _make_npz(self.tmp / "landmarks", "clip_evil", malicious_technique)
+            rv._approve(npz, "clip_evil", malicious_technique, "rev@example.com")
+
+            # The file should land inside templates_dir, not outside it
+            evil_dir = self.tmp / "evil_dir"
+            self.assertFalse(
+                evil_dir.exists(),
+                "Path traversal: approved file must not escape TEMPLATES_DIR",
+            )
+            # The sanitised name is "evil_dir" (last component); file should be there
+            dest = templates_dir / "evil_dir" / "clip_evil.npz"
+            self.assertTrue(dest.exists(), f"Expected sanitised dest {dest} to exist")
+        finally:
+            rv.TEMPLATES_DIR = orig_td
+            rv.MANIFEST_PATH = orig_mp
+
+
+class TestKeyboardInterruptDuringReason(unittest.TestCase):
+    """Ctrl-C during the rejection-reason prompt must not reject the file."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_ctrl_c_during_reason_does_not_reject(self):
+        import data_pipeline.review as rv
+
+        landmarks_dir = self.tmp / "landmarks"
+        templates_dir = self.tmp / "templates"
+        rejected_dir = self.tmp / "rejected"
+        manifest_path = templates_dir / "manifest.json"
+        _make_npz(landmarks_dir, "clip_ctrlc", "front_kick")
+
+        orig_ld = rv.LANDMARKS_DIR
+        orig_td = rv.TEMPLATES_DIR
+        orig_rd = rv.REJECTED_DIR
+        orig_mp = rv.MANIFEST_PATH
+        rv.TEMPLATES_DIR = templates_dir
+        rv.REJECTED_DIR = rejected_dir
+        rv.MANIFEST_PATH = manifest_path
+
+        # First input call returns "r" (reject decision);
+        # second call (reason prompt) raises KeyboardInterrupt.
+        call_count = 0
+
+        def fake_input(_prompt=""):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                return "r"
+            raise KeyboardInterrupt
+
+        with (
+            patch.object(rv, "_render_terminal"),
+            patch("builtins.input", side_effect=fake_input),
+        ):
+            try:
+                rv.run_review(
+                    reviewer_email="t@e.com",
+                    save_mp4=False,
+                    landmarks_dir=landmarks_dir,
+                )
+            except KeyboardInterrupt:
+                self.fail("run_review() must not propagate KeyboardInterrupt")
+
+        rv.LANDMARKS_DIR = orig_ld
+        rv.TEMPLATES_DIR = orig_td
+        rv.REJECTED_DIR = orig_rd
+        rv.MANIFEST_PATH = orig_mp
+
+        # The .npz must still be in landmarks (not moved to rejected)
+        self.assertTrue(
+            (landmarks_dir / "clip_ctrlc.npz").exists(),
+            "File must remain in landmarks when Ctrl-C is pressed at reason prompt",
+        )
+        self.assertFalse(
+            (rejected_dir / "clip_ctrlc.npz").exists(),
+            "File must not be in rejected dir when Ctrl-C is pressed at reason prompt",
+        )
+
+
 class TestCLI(unittest.TestCase):
     """Smoke-test the CLI argument parsing."""
 
