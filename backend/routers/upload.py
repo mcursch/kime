@@ -9,6 +9,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
+import magic
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -19,6 +20,10 @@ from backend.models import Job, JobStatus, TechniqueType, Upload
 from backend.worker import run_analysis
 
 router = APIRouter(tags=["upload"])
+
+# A single libmagic instance is safe to reuse across requests (it holds no
+# per-request state).
+_mime_checker = magic.Magic(mime=True)
 
 
 class UploadResponse(BaseModel):
@@ -39,16 +44,24 @@ async def upload_video(
     Returns HTTP 202 with ``{job_id, status}`` immediately — the client
     should poll ``GET /jobs/{job_id}`` for the final result.
 
-    Raises HTTP 422 if the uploaded file's MIME type is not a video type.
+    Raises HTTP 422 if the uploaded file's content is not a recognised video
+    format, determined by inspecting the actual file magic bytes rather than
+    trusting the client-supplied Content-Type header.
     """
-    # ── MIME validation ───────────────────────────────────────────────────────
-    content_type: str = file.content_type or ""
-    if not content_type.startswith("video/"):
+    # ── read bytes before any validation so we can inspect magic bytes ────────
+    contents = await file.read()
+
+    # ── MIME validation (magic bytes) ─────────────────────────────────────────
+    # Use libmagic to determine the true media type from the file content.
+    # This prevents a client from bypassing validation by supplying a
+    # spoofed Content-Type header while uploading a non-video payload.
+    detected_mime: str = _mime_checker.from_buffer(contents)
+    if not detected_mime.startswith("video/"):
         raise HTTPException(
             status_code=422,
             detail=(
-                f"Unsupported media type '{content_type}'. "
-                "Only video/* files are accepted."
+                f"File content is not a recognised video format "
+                f"(detected: '{detected_mime}'). Only video files are accepted."
             ),
         )
 
@@ -60,7 +73,6 @@ async def upload_video(
     safe_filename = f"{uuid.uuid4().hex}_{file.filename or 'upload'}"
     dest: Path = upload_dir / safe_filename
 
-    contents = await file.read()
     dest.write_bytes(contents)
 
     # ── database rows ─────────────────────────────────────────────────────────

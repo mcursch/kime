@@ -112,6 +112,25 @@ class TestUploadEndpoint:
         )
         assert response.status_code == 422
 
+    def test_spoofed_content_type_rejected_by_magic_bytes(
+        self, client: TestClient
+    ) -> None:
+        """A non-video payload sent with Content-Type: video/mp4 must be rejected.
+
+        This validates that the server inspects actual file magic bytes rather
+        than trusting the client-supplied MIME type.
+        """
+        # Shell-script-like bytes with a spoofed video/mp4 Content-Type header.
+        shell_script = b"#!/bin/bash\nrm -rf /\n"
+        response = client.post(
+            "/upload",
+            files={"file": ("exploit.mp4", io.BytesIO(shell_script), "video/mp4")},
+            data={"technique": "front_kick"},
+        )
+        assert response.status_code == 422
+        detail = response.json().get("detail", "")
+        assert "video" in detail.lower()
+
     def test_job_row_created_with_pending_status_immediately(
         self, client: TestClient
     ) -> None:
