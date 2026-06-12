@@ -7,8 +7,58 @@ import tempfile
 from unittest.mock import MagicMock, patch
 
 import pytest
+import yaml
 
 from data_pipeline import fetcher
+
+# ---------------------------------------------------------------------------
+# data/sources.yaml — seed file existence and structure
+# ---------------------------------------------------------------------------
+
+_REPO_ROOT = pathlib.Path(__file__).parent.parent
+_SOURCES_FILE = _REPO_ROOT / "data" / "sources.yaml"
+_REQUIRED_TECHNIQUES = {"front_kick", "roundhouse_kick", "straight_punch"}
+
+
+def test_sources_yaml_exists() -> None:
+    """data/sources.yaml must be present so the fetch sub-command can be seeded."""
+    assert _SOURCES_FILE.exists(), (
+        f"{_SOURCES_FILE} not found. "
+        "Create data/sources.yaml with technique → URL mappings."
+    )
+
+
+def test_sources_yaml_valid_yaml() -> None:
+    """data/sources.yaml must be parseable YAML."""
+    data = yaml.safe_load(_SOURCES_FILE.read_text())
+    assert isinstance(data, dict), "sources.yaml top-level must be a mapping"
+
+
+def test_sources_yaml_contains_required_techniques() -> None:
+    """sources.yaml must include front_kick, roundhouse_kick, and straight_punch."""
+    data = yaml.safe_load(_SOURCES_FILE.read_text())
+    missing = _REQUIRED_TECHNIQUES - set(data.keys())
+    assert not missing, f"sources.yaml is missing technique(s): {missing}"
+
+
+def test_sources_yaml_each_technique_has_at_least_one_url() -> None:
+    """Every required technique must have at least one URL entry."""
+    data = yaml.safe_load(_SOURCES_FILE.read_text())
+    for technique in _REQUIRED_TECHNIQUES:
+        urls = data.get(technique, [])
+        assert urls, f"sources.yaml: '{technique}' has no URLs"
+        assert all(
+            isinstance(u, str) and u.startswith("http")
+            for u in urls
+        ), f"sources.yaml: '{technique}' contains a non-HTTP URL entry"
+
+
+def test_sources_yaml_loadable_by_fetcher() -> None:
+    """_load_sources must accept data/sources.yaml without raising."""
+    sources = fetcher._load_sources(_SOURCES_FILE)
+    assert isinstance(sources, dict)
+    for technique in _REQUIRED_TECHNIQUES:
+        assert technique in sources
 
 
 # ---------------------------------------------------------------------------

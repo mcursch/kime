@@ -1,0 +1,30 @@
+# data/sources.yaml — seed URLs for the Phase 2 data pipeline.
+#
+# Usage:
+#   python -m data_pipeline.cli fetch --sources data/sources.yaml
+#
+# Format: each top-level key is a technique label; the value is a list of
+# publicly accessible YouTube URLs that yt-dlp can download.  The fetch
+# subcommand will skip any URL that returns a network error or 404 so a single
+# broken link does not abort the whole run.
+#
+# Add more URLs to improve reference template quality.  Remove or comment out
+# any URL that becomes unavailable.
+
+front_kick:
+  # Howcast — "How to Do a Front Kick | Taekwondo Training"
+  - https://www.youtube.com/watch?v=5Yn1TFCXBL8
+  # FightTips — "How to Front Kick | Front Kick Tutorial"
+  - https://www.youtube.com/watch?v=sNOGvz7ANSY
+
+roundhouse_kick:
+  # Howcast — "How to Do a Roundhouse Kick | Taekwondo Training"
+  - https://www.youtube.com/watch?v=4rFkEMbm8YQ
+  # FightTips — "How to Throw a Roundhouse Kick"
+  - https://www.youtube.com/watch?v=dj_jhSjYdQk
+
+straight_punch:
+  # Howcast — "How to Throw a Straight Punch | Boxing Lessons"
+  - https://www.youtube.com/watch?v=OhTOJl-JK2s
+  # FightTips — "How to Punch Faster & Harder"
+  - https://www.youtube.com/watch?v=ncDtBL8mNVk
