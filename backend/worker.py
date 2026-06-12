@@ -154,8 +154,10 @@ def _describe_keyframe(
     """
     frame = landmarks[frame_idx]
 
-    # Raised knee: higher y = further above hip centre
-    raised_knee_y = float(max(frame[_LM_LEFT_KNEE, 1], frame[_LM_RIGHT_KNEE, 1]))
+    # Raised knee: in hip-centred MediaPipe coordinates y increases downward,
+    # so the most-raised knee has the most-negative y value → use min().
+    # Negate when reporting so positive means "above hip centre".
+    raised_knee_y = float(min(frame[_LM_LEFT_KNEE, 1], frame[_LM_RIGHT_KNEE, 1]))
 
     if phase == "chamber":
         nose = frame[_LM_NOSE, :]
@@ -164,7 +166,7 @@ def _describe_keyframe(
             np.linalg.norm(frame[_LM_RIGHT_WRIST, :] - nose),
         ))
         return (
-            f"Chamber (frame {frame_idx}): raised knee at {raised_knee_y:+.2f} "
+            f"Chamber (frame {frame_idx}): raised knee at {-raised_knee_y:+.2f} "
             f"torso-lengths above hip centre; nearest guard wrist "
             f"{guard_dist:.2f} torso-lengths from nose"
         )
@@ -195,7 +197,7 @@ def _describe_keyframe(
     else:  # retraction
         return (
             f"Retraction (frame {frame_idx}): raised knee at "
-            f"{raised_knee_y:+.2f} torso-lengths above hip centre"
+            f"{-raised_knee_y:+.2f} torso-lengths above hip centre"
         )
 
 
@@ -281,10 +283,12 @@ def _compute_keyframe_indices(
     """
     n = len(landmarks)
 
-    # Chamber: highest knee in the first half (pre-strike load)
+    # Chamber: highest knee in the first half (pre-strike load).
+    # In hip-centred MediaPipe coordinates y increases *downward*, so the most
+    # raised knee has the most-negative y value.  Use min + argmin accordingly.
     half = max(n // 2, 1)
-    knee_heights = landmarks[:half, [_LM_LEFT_KNEE, _LM_RIGHT_KNEE], 1].max(axis=1)
-    chamber_idx = int(np.argmax(knee_heights))
+    knee_heights = landmarks[:half, [_LM_LEFT_KNEE, _LM_RIGHT_KNEE], 1].min(axis=1)
+    chamber_idx = int(np.argmin(knee_heights))
 
     # Extension: peak displacement of the most-active end-effector
     ee_candidates = [_LM_LEFT_WRIST, _LM_RIGHT_WRIST, _LM_LEFT_ANKLE, _LM_RIGHT_ANKLE]
@@ -509,6 +513,32 @@ def run_analysis(job_id: int, anthropic_client=None) -> None:
                 logger.warning(
                     "run_analysis: keyframe extraction failed for job %d; "
                     "continuing without keyframes",
+                    job_id,
+                    exc_info=True,
+                )
+        else:
+            # No preprocessing result (landmark extraction failed; reference
+            # template used).  Derive keyframe indices directly from the
+            # reference-template landmarks so the coaching prompt still
+            # receives visual grounding, mirroring what process_job does.
+            try:
+                _ref_chamber, _ref_ext, _ref_ret = _compute_keyframe_indices(landmarks)
+                _keyframe_descriptions, _keyframe_paths_list = _extract_keyframes(
+                    landmarks=landmarks,
+                    chamber_idx=_ref_chamber,
+                    extension_idx=_ref_ext,
+                    retraction_idx=_ref_ret,
+                )
+                logger.debug(
+                    "run_analysis: extracted %d keyframe descriptions from "
+                    "reference template for job %d",
+                    len(_keyframe_descriptions),
+                    job_id,
+                )
+            except Exception:
+                logger.warning(
+                    "run_analysis: reference-template keyframe extraction failed "
+                    "for job %d; continuing without keyframes",
                     job_id,
                     exc_info=True,
                 )
