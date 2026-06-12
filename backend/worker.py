@@ -137,6 +137,7 @@ def run_analysis(job_id: int) -> None:
 
         # ── landmark extraction ───────────────────────────────────────────────
         landmarks: np.ndarray | None = None
+        _extraction_failed = False
         if job.upload and job.upload.storage_path:
             try:
                 from backend.extractors.landmarks import extract_landmarks
@@ -159,6 +160,7 @@ def run_analysis(job_id: int) -> None:
                     "falling back to reference template",
                     job_id,
                 )
+                _extraction_failed = True
 
         if landmarks is None:
             landmarks = _load_reference_landmarks(technique)
@@ -179,9 +181,27 @@ def run_analysis(job_id: int) -> None:
             )
         db.flush()
 
-        # ── coaching feedback & AnalysisResult ────────────────────────────────
+        # ── AnalysisResult (written unconditionally when job has a UUID) ──────
+        # The row is created here regardless of whether coaching feedback is
+        # available so that the results endpoint never encounters a completed
+        # job without a corresponding AnalysisResult row.
+        analysis_result: AnalysisResult | None = None
+        if job.job_id:
+            analysis_result = AnalysisResult(
+                job_id=job.job_id,
+                scores=json.dumps(
+                    {cr.name: float(cr.score) for cr in rep_score.criteria}
+                ),
+                metric_deltas=_criteria_json(rep_score),
+                keyframe_paths=json.dumps([]),
+                overall_score=int(rep_score.overall * 100),
+                created_at=datetime.utcnow(),
+            )
+            db.add(analysis_result)
+
+        # ── coaching feedback (optional, requires ANTHROPIC_API_KEY) ─────────
         api_key = os.environ.get("ANTHROPIC_API_KEY")
-        if api_key and job.job_id:
+        if api_key and analysis_result is not None:
             try:
                 import anthropic as _anthropic
 
@@ -190,19 +210,7 @@ def run_analysis(job_id: int) -> None:
                 coaching_input = _build_coaching_input(technique, rep_score)
                 client = _anthropic.Anthropic(api_key=api_key)
                 feedback = generate_feedback(coaching_input, client)
-
-                db.add(
-                    AnalysisResult(
-                        job_id=job.job_id,
-                        scores=json.dumps(
-                            {cr.name: float(cr.score) for cr in rep_score.criteria}
-                        ),
-                        metric_deltas=_criteria_json(rep_score),
-                        keyframe_paths=json.dumps([]),
-                        overall_score=int(rep_score.overall * 100),
-                        created_at=datetime.utcnow(),
-                    )
-                )
+                analysis_result.feedback = feedback
                 logger.debug(
                     "run_analysis: coaching feedback generated for job %d: %.80s",
                     job_id,
@@ -214,6 +222,15 @@ def run_analysis(job_id: int) -> None:
                     "continuing without it",
                     job_id,
                 )
+
+        # ── degraded-result warning ───────────────────────────────────────────
+        # When landmark extraction failed and scores were derived from the
+        # reference template, record a human-readable note so callers can
+        # surface the degraded result to the user.
+        if _extraction_failed:
+            job.error_message = (
+                "Landmark extraction failed; scores are based on the reference template"
+            )
 
         # ── completed ─────────────────────────────────────────────────────────
         job.status = JobStatus.completed

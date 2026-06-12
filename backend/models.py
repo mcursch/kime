@@ -125,6 +125,11 @@ class AnalysisResult(Base):
     metric_deltas: Mapped[str] = mapped_column(Text, nullable=False)  # JSON blob
     keyframe_paths: Mapped[str] = mapped_column(Text, nullable=False) # JSON blob
     overall_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Coaching feedback from Claude; NULL when no API key is configured or the
+    # call fails.  The sqlite3 path (process_job) stores feedback in
+    # scores.feedback instead — both columns serve the same purpose in their
+    # respective code paths.
+    feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     job: Mapped["Job"] = relationship("Job", back_populates="result")
