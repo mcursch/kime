@@ -101,7 +101,7 @@ export default function SkeletonOverlay({
       if (!landmarks || landmarks.length === 0) return;
 
       const frameIndex = Math.min(
-        Math.round(currentTime * fps),
+        Math.floor(currentTime * fps),
         landmarks.length - 1,
       );
       const frame = landmarks[frameIndex];
@@ -180,6 +180,12 @@ export default function SkeletonOverlay({
 
     // Draw the initial/paused frame.
     drawFrame(video.currentTime);
+
+    // If the video is already playing when props change (causing effect re-run),
+    // re-start the RAF loop — no 'play' event will fire in this case.
+    if (!video.paused && !video.ended) {
+      startLoop();
+    }
 
     return () => {
       video.removeEventListener('play', startLoop);
