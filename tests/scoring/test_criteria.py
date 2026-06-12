@@ -19,11 +19,11 @@ from backend.scoring.criteria import (
     CHAMBER_HEIGHT_TOLERANCE,
     EXTENSION_ANGLE_TOLERANCE,
     CriterionResult,
-    balance_com,
+    balance,
     chamber_height,
     extension_angle,
     guard_position,
-    hip_rotation_at_impact,
+    hip_rotation,
     retraction_speed,
 )
 
@@ -46,9 +46,9 @@ _RIGHT_ANKLE = 28
 
 SCORERS = [
     chamber_height,
-    hip_rotation_at_impact,
+    hip_rotation,
     extension_angle,
-    balance_com,
+    balance,
     guard_position,
     retraction_speed,
 ]

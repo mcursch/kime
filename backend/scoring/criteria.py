@@ -181,7 +181,7 @@ def chamber_height(
     )
 
 
-def hip_rotation_at_impact(
+def hip_rotation(
     aligned_seq: np.ndarray,
     reference: np.ndarray,
 ) -> CriterionResult:
@@ -205,7 +205,7 @@ def hip_rotation_at_impact(
     delta = user_yaw - ref_yaw
     score = _score_from_delta(delta, HIP_ROTATION_TOLERANCE)
     return CriterionResult(
-        name="hip_rotation_at_impact",
+        name="hip_rotation",
         score=round(score, 4),
         delta=round(delta, 6),
         unit="degrees",
@@ -263,7 +263,7 @@ def extension_angle(
     )
 
 
-def balance_com(
+def balance(
     aligned_seq: np.ndarray,
     reference: np.ndarray,
 ) -> CriterionResult:
@@ -297,7 +297,7 @@ def balance_com(
     delta = user_offset - ref_offset
     score = _score_from_delta(delta, BALANCE_COM_TOLERANCE)
     return CriterionResult(
-        name="balance_com",
+        name="balance",
         score=round(score, 4),
         delta=round(delta, 6),
         unit="torso-lengths",
@@ -379,17 +379,6 @@ def retraction_speed(
 # Aggregate scorer
 # ---------------------------------------------------------------------------
 
-# Maps each criterion function's internal name to the canonical slug used by
-# the scoring engine (weights.CRITERION_NAMES).
-_CRITERION_NAME_MAP: dict[str, str] = {
-    "chamber_height": "chamber_height",
-    "hip_rotation_at_impact": "hip_rotation",
-    "extension_angle": "extension_angle",
-    "balance_com": "balance",
-    "guard_position": "guard_position",
-    "retraction_speed": "retraction_speed",
-}
-
 
 def score_all_criteria(
     technique: str,
@@ -428,14 +417,11 @@ def score_all_criteria(
 
     raw_results: list[CriterionResult] = [
         chamber_height(aligned_seq, reference),
-        hip_rotation_at_impact(aligned_seq, reference),
+        hip_rotation(aligned_seq, reference),
         extension_angle(aligned_seq, reference),
-        balance_com(aligned_seq, reference),
+        balance(aligned_seq, reference),
         guard_position(aligned_seq, reference),
         retraction_speed(aligned_seq, reference),
     ]
 
-    return {
-        _CRITERION_NAME_MAP[cr.name]: (cr.score, cr.delta)
-        for cr in raw_results
-    }
+    return {cr.name: (cr.score, cr.delta) for cr in raw_results}
