@@ -1,19 +1,45 @@
 """Tests for POST /upload and GET /jobs/{job_id}."""
 
 import io
-import os
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
-# Point at an in-memory DB before importing any backend module so that
-# database.py picks up the URL when it evaluates at import time.
-os.environ["DATABASE_URL"] = "sqlite:///:memory:"
-
+# DATABASE_URL=sqlite:///:memory: is set in the root conftest.py before any
+# backend module is imported, so backend.database.engine is already bound to
+# the in-memory DB by the time this module is collected.
 from backend.database import Base, SessionLocal, engine, get_db  # noqa: E402
 from backend.main import app  # noqa: E402
 from backend.models import Job, JobStatus, Score  # noqa: E402
+
+
+# ---------------------------------------------------------------------------
+# Regression test: LIN-172
+# ---------------------------------------------------------------------------
+
+
+def test_database_engine_is_in_memory() -> None:
+    """backend.database.engine must be bound to an in-memory SQLite DB.
+
+    This is a regression test for LIN-172: previously ``tests/test_upload.py``
+    set ``os.environ["DATABASE_URL"]`` at module level to point at
+    ``sqlite:///:memory:``, but ``backend/tests/test_analyze_endpoint.py`` is
+    collected first (``backend/tests`` precedes ``tests`` in pytest.ini
+    testpaths), causing ``backend.database`` to be imported with whatever URL
+    was in the environment at *that* point — typically the real file-based
+    ``kime.db``.
+
+    The fix is to set ``DATABASE_URL`` in the root ``conftest.py`` *before*
+    any test module is imported, so ``backend.database.engine`` is always
+    wired to the in-memory DB during a test run.
+    """
+    assert "memory" in str(engine.url), (
+        f"Expected in-memory SQLite DB; got engine URL: {engine.url!r}.\n"
+        "This means DATABASE_URL was not set before backend.database was "
+        "first imported.  Check that conftest.py sets DATABASE_URL via "
+        "os.environ.setdefault before any backend module is imported."
+    )
 
 
 # ---------------------------------------------------------------------------
