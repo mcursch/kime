@@ -25,6 +25,7 @@ resulting templates should replace these files.
 from __future__ import annotations
 
 import argparse
+import json
 import pathlib
 
 import numpy as np
@@ -259,6 +260,21 @@ def main() -> None:
         out_path = output_dir / f"{slug}.npy"
         np.save(out_path, flat)
         print(f"Saved {out_path}  shape={flat.shape}  dtype={flat.dtype}")
+
+        # Write a sidecar metadata file so load_reference_template() can
+        # detect and warn about synthetic stubs at runtime (LIN-168).
+        meta = {
+            "source": "synthetic",
+            "generator": "scripts/generate_reference_templates.py",
+            "frames": _N_FRAMES,
+            "note": (
+                "Development stub — intentionally schematic. "
+                "Replace with Phase 2 pipeline output (LIN-168)."
+            ),
+        }
+        meta_path = out_path.with_suffix(".meta.json")
+        meta_path.write_text(json.dumps(meta, indent=2) + "\n")
+        print(f"Saved {meta_path}")
 
     print("Done.")
 

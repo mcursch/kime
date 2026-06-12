@@ -1,0 +1,6 @@
+{
+  "source": "synthetic",
+  "generator": "scripts/generate_reference_templates.py",
+  "frames": 60,
+  "note": "Development stub — intentionally schematic. Replace with Phase 2 pipeline output (LIN-168)."
+}

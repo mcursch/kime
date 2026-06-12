@@ -8,6 +8,8 @@ template loaded from ``backend/data/references/``.
 from __future__ import annotations
 
 import dataclasses
+import json
+import logging
 import pathlib
 from typing import List, Tuple
 
@@ -16,6 +18,8 @@ from dtaidistance import dtw, dtw_ndim
 
 # Directory that holds per-technique reference templates (.npy files).
 _REFERENCES_DIR = pathlib.Path(__file__).parent.parent / "data" / "references"
+
+logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -68,6 +72,25 @@ def load_reference_template(technique_slug: str) -> np.ndarray:
             f"Expected file: {template_path}. "
             f"Available templates: {sorted(p.stem for p in _REFERENCES_DIR.glob('*.npy'))}."
         )
+
+    # Emit a warning when the template is a known synthetic stub so that
+    # operators can see at a glance that Phase 2 data has not been integrated.
+    # The sidecar is written by scripts/generate_reference_templates.py and
+    # should be removed (along with the .npy) once real pipeline output lands.
+    meta_path = template_path.with_suffix(".meta.json")
+    if meta_path.exists():
+        try:
+            meta = json.loads(meta_path.read_text())
+        except (json.JSONDecodeError, OSError):
+            meta = {}
+        if meta.get("source") == "synthetic":
+            logger.warning(
+                "Loading SYNTHETIC reference template for '%s'. "
+                "This is a schematic development stub — replace it with "
+                "real Phase 2 pipeline output (see LIN-168).",
+                technique_slug,
+            )
+
     return np.load(template_path)
 
 

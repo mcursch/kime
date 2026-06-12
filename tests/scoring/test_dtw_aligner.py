@@ -220,6 +220,90 @@ class TestCommittedReferenceTemplates:
 
 
 # ---------------------------------------------------------------------------
+# Synthetic template detection (LIN-168)
+# ---------------------------------------------------------------------------
+
+
+class TestSyntheticTemplateWarning:
+    """load_reference_template emits a WARNING for synthetic stubs."""
+
+    def test_warns_when_meta_marks_source_as_synthetic(
+        self, tmp_path, monkeypatch, caplog
+    ):
+        """A .meta.json sidecar with source=='synthetic' triggers a WARNING."""
+        import backend.scoring.dtw_aligner as module
+        import logging
+
+        template = _make_sequence(60)
+        np.save(tmp_path / "test_kick.npy", template)
+        (tmp_path / "test_kick.meta.json").write_text(
+            '{"source": "synthetic", "frames": 60}'
+        )
+
+        monkeypatch.setattr(module, "_REFERENCES_DIR", tmp_path)
+
+        with caplog.at_level(logging.WARNING, logger="backend.scoring.dtw_aligner"):
+            load_reference_template("test_kick")
+
+        assert any("SYNTHETIC" in record.message for record in caplog.records), (
+            "Expected a WARNING containing 'SYNTHETIC' for a synthetic template"
+        )
+
+    def test_no_warning_when_meta_marks_source_as_real(
+        self, tmp_path, monkeypatch, caplog
+    ):
+        """No warning is emitted when source != 'synthetic'."""
+        import backend.scoring.dtw_aligner as module
+        import logging
+
+        template = _make_sequence(60)
+        np.save(tmp_path / "real_kick.npy", template)
+        (tmp_path / "real_kick.meta.json").write_text(
+            '{"source": "pipeline", "frames": 60}'
+        )
+
+        monkeypatch.setattr(module, "_REFERENCES_DIR", tmp_path)
+
+        with caplog.at_level(logging.WARNING, logger="backend.scoring.dtw_aligner"):
+            load_reference_template("real_kick")
+
+        assert not any(
+            "SYNTHETIC" in record.message for record in caplog.records
+        ), "Unexpected SYNTHETIC warning for a non-synthetic template"
+
+    def test_no_warning_when_no_meta_file(self, tmp_path, monkeypatch, caplog):
+        """No warning when there is no sidecar metadata file at all."""
+        import backend.scoring.dtw_aligner as module
+        import logging
+
+        template = _make_sequence(60)
+        np.save(tmp_path / "bare_kick.npy", template)
+
+        monkeypatch.setattr(module, "_REFERENCES_DIR", tmp_path)
+
+        with caplog.at_level(logging.WARNING, logger="backend.scoring.dtw_aligner"):
+            load_reference_template("bare_kick")
+
+        assert not any(
+            "SYNTHETIC" in record.message for record in caplog.records
+        ), "Unexpected SYNTHETIC warning when no .meta.json exists"
+
+    @pytest.mark.parametrize("slug", ("front_kick", "roundhouse_kick", "straight_punch"))
+    def test_committed_templates_are_marked_synthetic(self, slug: str):
+        """The committed development stubs ship with .meta.json marking source='synthetic'."""
+        meta_path = _REFERENCES_DIR / f"{slug}.meta.json"
+        assert meta_path.exists(), (
+            f"Missing sidecar: {meta_path}. "
+            f"Run scripts/generate_reference_templates.py to regenerate it."
+        )
+        import json
+        meta = json.loads(meta_path.read_text())
+        assert meta.get("source") == "synthetic", (
+            f"{slug}.meta.json: expected source='synthetic', got {meta.get('source')!r}"
+        )
+
+
+# ---------------------------------------------------------------------------
 # align_to_reference tests
 # ---------------------------------------------------------------------------
 
