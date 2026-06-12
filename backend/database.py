@@ -2,13 +2,18 @@
 
 import os
 import sqlite3
+import sys
 from typing import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./kime.db")
+_kime_db_path = os.getenv("KIME_DB_PATH")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    f"sqlite:///{_kime_db_path}" if _kime_db_path else "sqlite:///./kime.db",
+)
 
 # connect_args is SQLite-specific: allow the same connection to be used across
 # threads (needed for FastAPI's sync dependency injection).
@@ -27,8 +32,17 @@ else:
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-class Base(DeclarativeBase):
-    """Shared declarative base for all ORM models."""
+# Preserve the Base class across module reloads so that model classes remain
+# registered on the same MetaData object even when this module is reloaded
+# (e.g. by the test fixture that updates KIME_DB_PATH).  Without this guard a
+# reload would create a fresh Base whose metadata has no tables, breaking
+# Base.metadata.create_all().
+_prior = sys.modules.get(__name__)
+if _prior is not None and isinstance(getattr(_prior, "Base", None), type):
+    Base: type = _prior.Base  # type: ignore[assignment]
+else:
+    class Base(DeclarativeBase):  # type: ignore[no-redef]
+        """Shared declarative base for all ORM models."""
 
 
 def init_db(db_path: str | None = None) -> None:

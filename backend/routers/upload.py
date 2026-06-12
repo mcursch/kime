@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -28,6 +28,7 @@ class UploadResponse(BaseModel):
 
 @router.post("/upload", response_model=UploadResponse, status_code=202)
 async def upload_video(
+    request: Request,
     background_tasks: BackgroundTasks,
     file: UploadFile,
     technique: TechniqueType = Form(default=TechniqueType.front_kick),
@@ -85,6 +86,7 @@ async def upload_video(
     db.refresh(job_row)
 
     # ── enqueue background analysis ───────────────────────────────────────────
-    background_tasks.add_task(run_analysis, job_row.id)
+    anthropic_client = getattr(request.app.state, "anthropic_client", None)
+    background_tasks.add_task(run_analysis, job_row.id, anthropic_client)
 
     return UploadResponse(job_id=job_row.id, status=job_row.status.value)

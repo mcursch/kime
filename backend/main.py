@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 import logging
+import os
+from contextlib import asynccontextmanager
 
+import anthropic
 from fastapi import FastAPI
 
+from backend.database import init_db
 from backend.routers.analyze import router as analyze_router
 from backend.routers.jobs import router as jobs_router
 from backend.routers.results import router as results_router
@@ -13,10 +17,41 @@ from backend.routers.upload import router as upload_router
 
 logging.basicConfig(level=logging.INFO)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan handler.
+
+    Validates that ``ANTHROPIC_API_KEY`` is present and creates a shared
+    :class:`anthropic.Anthropic` client stored in ``app.state`` so that
+    background workers can reuse it without constructing a new client on
+    every request.
+
+    Raises:
+        RuntimeError: When ``ANTHROPIC_API_KEY`` is not set.
+    """
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise RuntimeError(
+            "ANTHROPIC_API_KEY environment variable is not set. "
+            "Please set it before starting the server."
+        )
+
+    app.state.anthropic_client = anthropic.Anthropic(api_key=api_key)
+
+    # Ensure ORM tables exist in the configured database.
+    init_db()
+
+    yield
+
+    # Teardown: nothing to clean up for the Anthropic client.
+
+
 app = FastAPI(
     title="Kime",
     description="Martial-arts technique analyser API",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 app.include_router(analyze_router)

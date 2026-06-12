@@ -26,7 +26,8 @@ from datetime import datetime
 import numpy as np
 from sqlalchemy.orm import Session
 
-from backend.database import SessionLocal, get_connection
+import backend.database as _db
+from backend.database import get_connection
 from backend.models import AnalysisResult, Job, JobStatus, Score
 from backend.scoring.dtw_aligner import load_reference_template
 from backend.scoring.engine import score_rep
@@ -96,12 +97,22 @@ def _criteria_json(rep_score) -> str:
 # ---------------------------------------------------------------------------
 
 
-def run_analysis(job_id: int) -> None:
+def run_analysis(job_id: int, anthropic_client=None) -> None:
     """Execute the full analysis pipeline for *job_id* and persist the result.
 
     Opens its own DB session so it can run safely in a background thread
     without sharing the request-scoped session.  The job transitions through
     ``processing → completed | failed``.
+
+    Parameters
+    ----------
+    job_id:
+        Primary key of the :class:`backend.models.Job` row to process.
+    anthropic_client:
+        Optional pre-built :class:`anthropic.Anthropic` client.  When
+        supplied it is used directly for coaching feedback, bypassing the
+        environment-variable lookup.  When ``None`` the function falls back
+        to constructing a client from ``ANTHROPIC_API_KEY``.
 
     Pipeline
     --------
@@ -116,7 +127,7 @@ def run_analysis(job_id: int) -> None:
     6. Persist ``Score`` rows (one per criterion) and an ``AnalysisResult``
        row (when the job has a UUID ``job_id`` column).
     """
-    db: Session = SessionLocal()
+    db: Session = _db.SessionLocal()
     try:
         job: Job | None = db.get(Job, job_id)
         if job is None:
@@ -199,17 +210,21 @@ def run_analysis(job_id: int) -> None:
             )
             db.add(analysis_result)
 
-        # ── coaching feedback (optional, requires ANTHROPIC_API_KEY) ─────────
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
-        if api_key and analysis_result is not None:
-            try:
+        # ── coaching feedback (optional) ──────────────────────────────────────
+        # Prefer an injected client; fall back to constructing one from the env.
+        _coaching_client = anthropic_client
+        if _coaching_client is None:
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
+            if api_key:
                 import anthropic as _anthropic
+                _coaching_client = _anthropic.Anthropic(api_key=api_key)
 
+        if _coaching_client is not None and analysis_result is not None:
+            try:
                 from backend.coaching import generate_feedback
 
                 coaching_input = _build_coaching_input(technique, rep_score)
-                client = _anthropic.Anthropic(api_key=api_key)
-                feedback = generate_feedback(coaching_input, client)
+                feedback = generate_feedback(coaching_input, _coaching_client)
                 analysis_result.feedback = feedback
                 logger.debug(
                     "run_analysis: coaching feedback generated for job %d: %.80s",
