@@ -2,8 +2,8 @@
 Unit tests for backend.scoring.criteria.
 
 The primary acceptance criterion is: a landmark sequence that is identical
-to the reference template must score >= 95 for every criterion (because all
-raw deltas are zero, mapping to score = 100).
+to the reference template must score >= 0.95 for every criterion (because all
+raw deltas are zero, mapping to score = 1.0).
 
 Additional tests verify the CriterionResult contract (field types, score
 bounds, non-empty unit) and basic sensitivity (a deliberately degraded input
@@ -131,11 +131,11 @@ def reference_sequence() -> np.ndarray:
 def test_reference_identical_yields_high_score(
     scorer, reference_sequence: np.ndarray
 ) -> None:
-    """Passing the reference as both arguments must yield score >= 95."""
+    """Passing the reference as both arguments must yield score >= 0.95."""
     ref = reference_sequence
     result = scorer(ref.copy(), ref)
-    assert result.score >= 95.0, (
-        f"{scorer.__name__}: expected score >= 95, got {result.score:.2f}"
+    assert result.score >= 0.95, (
+        f"{scorer.__name__}: expected score >= 0.95, got {result.score:.4f}"
     )
 
 
@@ -157,9 +157,9 @@ def test_returns_criterion_result(
 def test_score_in_bounds(
     scorer, reference_sequence: np.ndarray
 ) -> None:
-    """Score must always be in [0, 100]."""
+    """Score must always be in [0.0, 1.0]."""
     result = scorer(reference_sequence.copy(), reference_sequence)
-    assert 0.0 <= result.score <= 100.0
+    assert 0.0 <= result.score <= 1.0
 
 
 @pytest.mark.parametrize("scorer", SCORERS, ids=[f.__name__ for f in SCORERS])
@@ -259,11 +259,11 @@ def test_score_clamped_to_zero_on_extreme_degradation(
         )
 
 
-def test_score_capped_at_100(reference_sequence: np.ndarray) -> None:
-    """Score must not exceed 100 even for an outperforming user."""
+def test_score_capped_at_one(reference_sequence: np.ndarray) -> None:
+    """Score must not exceed 1.0 even for an outperforming user."""
     ref = reference_sequence
     for scorer in SCORERS:
         result = scorer(ref.copy(), ref)
-        assert result.score <= 100.0, (
-            f"{scorer.__name__}: score {result.score:.4f} exceeds 100"
+        assert result.score <= 1.0, (
+            f"{scorer.__name__}: score {result.score:.4f} exceeds 1.0"
         )

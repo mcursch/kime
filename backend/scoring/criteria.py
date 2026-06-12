@@ -85,7 +85,7 @@ class CriterionResult:
     """Criterion identifier (snake_case)."""
 
     score: float
-    """Technique quality for this criterion, in the range [0, 100]."""
+    """Technique quality for this criterion, in the range [0.0, 1.0]."""
 
     delta: float
     """User metric minus reference metric, expressed in *unit*."""
@@ -145,8 +145,8 @@ def _impact_frame(seq: np.ndarray, ee_idx: int) -> int:
 
 
 def _score_from_delta(delta: float, tolerance: float) -> float:
-    """Map a raw delta to a [0, 100] score via linear normalisation."""
-    return float(max(0.0, 100.0 * (1.0 - abs(delta) / tolerance)))
+    """Map a raw delta to a [0.0, 1.0] score via linear normalisation."""
+    return float(max(0.0, 1.0 - abs(delta) / tolerance))
 
 
 # ---------------------------------------------------------------------------
@@ -412,8 +412,8 @@ def score_all_criteria(
     -------
     dict[str, tuple[float, float]]
         Mapping of canonical criterion name → ``(score, delta)`` where
-        *score* is normalised to **[0.0, 1.0]** and *delta* retains the
-        physical units defined by each criterion scorer.
+        *score* is in **[0.0, 1.0]** and *delta* retains the physical units
+        defined by each criterion scorer.
 
     Raises
     ------
@@ -436,6 +436,6 @@ def score_all_criteria(
     ]
 
     return {
-        _CRITERION_NAME_MAP[cr.name]: (cr.score / 100.0, cr.delta)
+        _CRITERION_NAME_MAP[cr.name]: (cr.score, cr.delta)
         for cr in raw_results
     }
