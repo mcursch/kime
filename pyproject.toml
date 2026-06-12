@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kime-backend"
+version = "0.1.0"
+description = "Kime martial arts technique analysis backend"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.111.0",
+    "uvicorn[standard]>=0.29.0",
+    "mediapipe>=0.10.14",
+    "opencv-python-headless>=4.9.0.80",
+    "numpy>=1.26.0",
+    "scipy>=1.13.0",
+    "dtaidistance>=2.3.12",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "httpx>=0.27.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["backend*"]
