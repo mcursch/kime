@@ -36,6 +36,10 @@ class AnalysisResultResponse(BaseModel):
     # Per-criterion metric deltas keyed by human-readable name (alias for
     # metric_deltas, exposed separately for API consumers that expect it).
     criteria: dict[str, Any] | None = None
+    # Public URL at which the original uploaded video can be played back.
+    # None when the job was created without an associated upload or when the
+    # upload has no storage path (e.g. tests that bypass the upload router).
+    video_url: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -66,6 +70,7 @@ class AnalysisResultResponse(BaseModel):
                 "overall_score": result.overall_score if result else None,
                 "feedback": result.feedback if result else None,
                 "criteria": metric_deltas if metric_deltas else None,
+                "video_url": result.video_url if result else None,
             }
             return out
         return data

@@ -8,7 +8,9 @@ from contextlib import asynccontextmanager
 
 import anthropic
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
+from backend.config import UPLOAD_DIR
 from backend.database import init_db
 from backend.routers.analyze import router as analyze_router
 from backend.routers.jobs import router as jobs_router
@@ -58,6 +60,12 @@ app.include_router(analyze_router)
 app.include_router(upload_router)
 app.include_router(jobs_router)
 app.include_router(results_router)
+
+# Serve uploaded video files at /uploads/<filename>.
+# The directory is created on demand by the upload router, so ensure it
+# exists before mounting to avoid a StaticFiles startup error.
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 
 @app.get("/health")

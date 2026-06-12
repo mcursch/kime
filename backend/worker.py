@@ -22,6 +22,7 @@ import json
 import logging
 import os
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 from sqlalchemy.orm import Session
@@ -198,6 +199,12 @@ def run_analysis(job_id: int, anthropic_client=None) -> None:
         # job without a corresponding AnalysisResult row.
         analysis_result: AnalysisResult | None = None
         if job.job_id:
+            # Derive the public video URL from the upload's storage path so
+            # the results page can stream the original upload back to the user.
+            video_url: str | None = None
+            if job.upload and job.upload.storage_path:
+                video_url = f"/uploads/{Path(job.upload.storage_path).name}"
+
             analysis_result = AnalysisResult(
                 job_id=job.job_id,
                 scores=json.dumps(
@@ -206,6 +213,7 @@ def run_analysis(job_id: int, anthropic_client=None) -> None:
                 metric_deltas=_criteria_json(rep_score),
                 keyframe_paths=json.dumps([]),
                 overall_score=int(rep_score.overall * 100),
+                video_url=video_url,
                 created_at=datetime.utcnow(),
             )
             db.add(analysis_result)

@@ -84,13 +84,14 @@ def make_job(db, status: JobStatus, session_id: str = "sess-abc", technique: str
     return job
 
 
-def attach_result(db, job: Job) -> AnalysisResult:
+def attach_result(db, job: Job, video_url: str | None = None) -> AnalysisResult:
     result = AnalysisResult(
         job_id=job.job_id,
         scores=json.dumps({"chamber_height": 85, "hip_rotation": 72, "extension_angle": 90}),
         metric_deltas=json.dumps({"hip_rotation_delta": -18.3}),
         keyframe_paths=json.dumps(["frames/impact_001.jpg"]),
         overall_score=82,
+        video_url=video_url,
         created_at=datetime.now(timezone.utc),
     )
     db.add(result)
@@ -161,6 +162,28 @@ class TestGetJobResults:
         resp = no_raise_client.get(f"/jobs/{job.job_id}/results")
 
         assert resp.status_code == 500
+
+    def test_video_url_is_returned_when_set(self, client, db):
+        """video_url is included in the response when the AnalysisResult has one."""
+        job = make_job(db, JobStatus.completed)
+        attach_result(db, job, video_url="/uploads/abc123_kick.mp4")
+
+        resp = client.get(f"/jobs/{job.job_id}/results")
+
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["video_url"] == "/uploads/abc123_kick.mp4"
+
+    def test_video_url_is_none_when_not_set(self, client, db):
+        """video_url is null in the response when the AnalysisResult has no video."""
+        job = make_job(db, JobStatus.completed)
+        attach_result(db, job, video_url=None)
+
+        resp = client.get(f"/jobs/{job.job_id}/results")
+
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["video_url"] is None
 
 
 # ---------------------------------------------------------------------------

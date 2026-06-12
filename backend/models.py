@@ -130,6 +130,10 @@ class AnalysisResult(Base):
     # scores.feedback instead — both columns serve the same purpose in their
     # respective code paths.
     feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # URL at which the original uploaded video can be streamed/downloaded.
+    # Set to ``/uploads/<filename>`` when the upload has a storage_path; NULL
+    # otherwise (e.g. jobs created without an associated Upload row).
+    video_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     job: Mapped["Job"] = relationship("Job", back_populates="result")
