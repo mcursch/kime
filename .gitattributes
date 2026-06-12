@@ -5,3 +5,5 @@
 .env.example     merge=union
 requirements.txt merge=union
 requirements-dev.txt merge=union
+*.pyc merge=ours
+*.pyo merge=ours
