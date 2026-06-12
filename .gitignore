@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Raw video files — never commit these
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+*.flv
+*.wmv
+*.m4v
+*.ts
+
+# MediaPipe model bundles (downloaded on first use)
+models/
+
+# Landmark output — only .npz files should appear here; no video
+data/landmarks/
+
+# Staged raw footage — video files are local-only
+data/staged/**/*.mp4
+data/staged/**/*.avi
+data/staged/**/*.mov
+data/staged/**/*.mkv
+data/staged/**/*.webm
+data/staged/**/*.flv
+data/staged/**/*.wmv
+data/staged/**/*.m4v
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
