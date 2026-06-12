@@ -38,6 +38,10 @@ class AnalysisResultResponse(BaseModel):
         """Merge Job + AnalysisResult ORM objects into a single dict."""
         if isinstance(data, Job):
             result = data.result
+            if result is None and data.status == JobStatus.completed:
+                raise ValueError(
+                    f"Data integrity error: completed job {data.job_id!r} has no AnalysisResult row"
+                )
             out: dict[str, Any] = {
                 "job_id": data.job_id,
                 "status": data.status,

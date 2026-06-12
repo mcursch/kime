@@ -135,11 +135,32 @@ class TestGetJobResults:
 
         assert resp.status_code == 202
 
+    def test_failed_job_returns_422(self, client, db):
+        job = make_job(db, JobStatus.failed)
+        db.commit()
+
+        resp = client.get(f"/jobs/{job.job_id}/results")
+
+        assert resp.status_code == 422
+        assert resp.json()["detail"] == "Job failed"
+
     def test_missing_job_returns_404(self, client):
         resp = client.get(f"/jobs/{uuid.uuid4()}/results")
 
         assert resp.status_code == 404
         assert resp.json()["detail"] == "Job not found"
+
+    def test_completed_job_without_result_row_returns_500(self, db):
+        """A completed job with no AnalysisResult row is a data-integrity error."""
+        job = make_job(db, JobStatus.completed)
+        db.commit()
+
+        # raise_server_exceptions=False so we receive the 500 HTTP response
+        # rather than having the test client re-raise the ValidationError.
+        no_raise_client = TestClient(app, raise_server_exceptions=False)
+        resp = no_raise_client.get(f"/jobs/{job.job_id}/results")
+
+        assert resp.status_code == 500
 
 
 # ---------------------------------------------------------------------------

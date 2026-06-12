@@ -13,6 +13,7 @@ GET /history
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
@@ -49,10 +50,16 @@ def get_job_results(
     if job is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
 
-    if job.status != JobStatus.completed:
+    if job.status == JobStatus.failed:
         raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Job failed",
+        )
+
+    if job.status != JobStatus.completed:
+        return JSONResponse(
             status_code=status.HTTP_202_ACCEPTED,
-            detail=f"Job is {job.status.value}",
+            content={"detail": f"Job is {job.status.value}"},
         )
 
     return AnalysisResultResponse.model_validate(job)
