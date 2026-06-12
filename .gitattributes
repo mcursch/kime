@@ -1,0 +1,7 @@
+# Auto-union append-only config files during the branch consolidation merges,
+# so additive entries from many branches combine instead of conflicting.
+.gitignore       merge=union
+.dockerignore    merge=union
+.env.example     merge=union
+requirements.txt merge=union
+requirements-dev.txt merge=union
