@@ -1,6 +1,7 @@
 """Database initialisation and session dependency."""
 
 import os
+import sqlite3
 from typing import Generator
 
 from sqlalchemy import create_engine
@@ -30,12 +31,50 @@ class Base(DeclarativeBase):
     """Shared declarative base for all ORM models."""
 
 
-def init_db() -> None:
-    """Create all tables that don't exist yet (used outside Alembic)."""
-    # Import models so their metadata is registered on Base before create_all.
-    import backend.models  # noqa: F401
+def init_db(db_path: str | None = None) -> None:
+    """Create all tables that don't exist yet.
 
-    Base.metadata.create_all(bind=engine)
+    When *db_path* is supplied a lightweight sqlite3 schema used by
+    :func:`backend.worker.process_job` is created at that path.  When
+    *db_path* is ``None`` the SQLAlchemy ORM schema is created on the
+    module-level ``engine`` (used outside Alembic by the main app).
+    """
+    if db_path is not None:
+        conn = get_connection(db_path)
+        conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS jobs (
+                id TEXT PRIMARY KEY,
+                status TEXT NOT NULL,
+                technique TEXT
+            );
+            CREATE TABLE IF NOT EXISTS scores (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                job_id TEXT NOT NULL REFERENCES jobs(id),
+                feedback TEXT,
+                criteria TEXT NOT NULL,
+                overall_score REAL
+            );
+            """
+        )
+        conn.commit()
+        conn.close()
+    else:
+        # Import models so their metadata is registered on Base before create_all.
+        import backend.models  # noqa: F401
+
+        Base.metadata.create_all(bind=engine)
+
+
+def get_connection(db_path: str) -> sqlite3.Connection:
+    """Return a :class:`sqlite3.Connection` for the database at *db_path*.
+
+    The connection uses :attr:`sqlite3.Row` as its row factory so that
+    results can be accessed by column name.
+    """
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 def get_db() -> Generator[Session, None, None]:
