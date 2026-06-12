@@ -63,8 +63,19 @@ def _make_front_kick_sequence(n_frames: int = 30) -> np.ndarray:
     base = _make_standing_skeleton()
     seq = np.tile(base[np.newaxis, :, :], (n_frames, 1, 1))  # (N, 33, 3)
 
-    t = np.linspace(0.0, np.pi, n_frames)          # 0 → π over the sequence
-    kick_height = np.sin(t)                         # peaks at mid-sequence
+    # Logistic (sigmoid) position profile: ankle extends smoothly from 0 to 1.
+    # Its derivative — the velocity — is a bell-shaped curve peaking at the
+    # sequence midpoint (an interior index), which scipy.signal.find_peaks can
+    # detect reliably even after Savitzky-Golay smoothing.
+    #
+    # The previous sin(t) profile had velocity cos(t), which is monotonically
+    # decreasing with its maximum at frame 0 (an endpoint index that find_peaks
+    # never returns), causing SegmentationError in all round-trip tests.
+    t = np.linspace(-4.0, 4.0, n_frames)
+    raw = 1.0 / (1.0 + np.exp(-t))       # logistic: ~0 → ~1
+    kick_height = raw - raw[0]            # start at 0
+    if kick_height.max() > 0:
+        kick_height /= kick_height.max() # peak at 1
 
     # Right ankle lifts up (positive Y) and forward (positive Z)
     seq[:, 28, 1] += kick_height * 0.8             # upward arc
@@ -78,8 +89,14 @@ def _make_punch_sequence(n_frames: int = 30) -> np.ndarray:
     base = _make_standing_skeleton()
     seq = np.tile(base[np.newaxis, :, :], (n_frames, 1, 1))
 
-    t = np.linspace(0.0, np.pi, n_frames)
-    punch_reach = np.sin(t)
+    # Same logistic profile as _make_front_kick_sequence; see that function
+    # for a full explanation of why a sigmoid gives a detectable interior
+    # velocity peak while the original sin(t) did not.
+    t = np.linspace(-4.0, 4.0, n_frames)
+    raw = 1.0 / (1.0 + np.exp(-t))
+    punch_reach = raw - raw[0]
+    if punch_reach.max() > 0:
+        punch_reach /= punch_reach.max()
 
     # Right wrist extends forward (positive Z)
     seq[:, 16, 2] += punch_reach * 0.5
