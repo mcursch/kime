@@ -66,39 +66,40 @@ def extract(video_path: Path, model_path: Path, output_dir: Path) -> Path:
 
     results: list[list[dict]] = []
 
-    with _build_landmarker(model_path) as landmarker:
-        frame_idx = 0
-        while True:
-            ok, bgr_frame = cap.read()
-            if not ok:
-                break
+    try:
+        with _build_landmarker(model_path) as landmarker:
+            frame_idx = 0
+            while True:
+                ok, bgr_frame = cap.read()
+                if not ok:
+                    break
 
-            # MediaPipe expects RGB
-            rgb_frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2RGB)
-            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
-            detection = landmarker.detect(mp_image)
+                # MediaPipe expects RGB
+                rgb_frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2RGB)
+                mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
+                detection = landmarker.detect(mp_image)
 
-            if detection.pose_landmarks:
-                landmarks = [
-                    {
-                        "x": float(lm.x),
-                        "y": float(lm.y),
-                        "z": float(lm.z),
-                        "visibility": float(lm.visibility),
-                    }
-                    for lm in detection.pose_landmarks[0]
-                ]
-                assert len(landmarks) == NUM_LANDMARKS, (
-                    f"Frame {frame_idx}: expected {NUM_LANDMARKS} landmarks, "
-                    f"got {len(landmarks)}"
-                )
-            else:
-                landmarks = []
+                if detection.pose_landmarks:
+                    landmarks = [
+                        {
+                            "x": float(lm.x),
+                            "y": float(lm.y),
+                            "z": float(lm.z),
+                            "visibility": float(lm.visibility),
+                        }
+                        for lm in detection.pose_landmarks[0]
+                    ]
+                    assert len(landmarks) == NUM_LANDMARKS, (
+                        f"Frame {frame_idx}: expected {NUM_LANDMARKS} landmarks, "
+                        f"got {len(landmarks)}"
+                    )
+                else:
+                    landmarks = []
 
-            results.append(landmarks)
-            frame_idx += 1
-
-    cap.release()
+                results.append(landmarks)
+                frame_idx += 1
+    finally:
+        cap.release()
 
     with output_path.open("w") as fh:
         json.dump(results, fh)

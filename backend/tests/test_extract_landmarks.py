@@ -9,17 +9,28 @@ validated:
   - Each entry is a list
   - Non-empty entries contain exactly 33 landmark dicts
   - Every landmark dict has the keys x, y, z, and visibility
+
+A separate set of tests (``test_detection_code_path_*``) use a mocked
+landmarker to exercise the non-empty detection branch of ``extract()``
+without requiring a real person in the video.  An optional integration
+test (``test_real_person_video_detection_rate``) can be activated by
+placing a video file containing a fully-visible person at
+``data/test_person.mp4``; it is skipped automatically when the file is
+absent.
 """
 
 import json
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import cv2
 import numpy as np
 import pytest
+
+# Make the scripts package importable regardless of how pytest is invoked
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -205,3 +216,147 @@ class TestOutputShape:
                         f"Frame {frame_idx}, landmark {lm_idx}, key '{key}': "
                         f"expected numeric, got {type(lm[key]).__name__}"
                     )
+
+
+# ---------------------------------------------------------------------------
+# Detection-code-path tests (mocked landmarker)
+#
+# These tests exercise the ``if detection.pose_landmarks:`` branch of
+# ``extract()`` without requiring a real person in the video.  They use a
+# mocked landmarker that unconditionally returns 33 fake landmarks per frame,
+# confirming that the serialisation logic (float conversion, key names, count
+# assertion) is correct.
+# ---------------------------------------------------------------------------
+
+
+def _make_fake_landmark(x: float = 0.5, y: float = 0.5, z: float = 0.0, visibility: float = 0.99):
+    """Return a MagicMock that mimics a MediaPipe NormalizedLandmark."""
+    lm = MagicMock()
+    lm.x = x
+    lm.y = y
+    lm.z = z
+    lm.visibility = visibility
+    return lm
+
+
+def _make_fake_landmarker(num_frames: int = 5):
+    """Return a context-manager-compatible mock landmarker.
+
+    Every call to ``detect()`` returns a result whose ``pose_landmarks``
+    contains one person with 33 fake landmarks, simulating a fully-visible
+    person in every frame.
+    """
+    fake_landmarks_per_person = [_make_fake_landmark(x=i * 0.01) for i in range(_NUM_LANDMARKS)]
+
+    fake_detection = MagicMock()
+    fake_detection.pose_landmarks = [fake_landmarks_per_person]
+
+    landmarker = MagicMock()
+    landmarker.detect.return_value = fake_detection
+    # Support use as a context manager (``with _build_landmarker(...) as l``)
+    landmarker.__enter__ = MagicMock(return_value=landmarker)
+    landmarker.__exit__ = MagicMock(return_value=False)
+    return landmarker
+
+
+@pytest.fixture(scope="module")
+def mocked_detection_output(tmp_path_factory: pytest.TempPathFactory):
+    """Run extract() with a mocked landmarker; return (data, frame_count)."""
+    tmp_dir = tmp_path_factory.mktemp("mocked_data")
+    video_path = tmp_dir / "person_clip.mp4"
+    fps, duration_s = 10, 1
+    frame_count = _create_sample_video(video_path, fps=fps, duration_s=duration_s)
+
+    # Fake model file — extract() checks existence before calling _build_landmarker
+    fake_model = tmp_dir / "fake_model.task"
+    fake_model.write_bytes(b"")
+
+    import scripts.extract_landmarks as el
+
+    with patch.object(el, "_build_landmarker", return_value=_make_fake_landmarker(frame_count)):
+        out_path = el.extract(video_path, fake_model, tmp_dir)
+
+    with out_path.open() as fh:
+        data = json.load(fh)
+
+    return data, frame_count
+
+
+def test_detection_code_path_all_frames_non_empty(mocked_detection_output) -> None:
+    """When every frame detects a person, no entry should be an empty list.
+
+    This directly validates the acceptance criterion:
+    'No frame produces an empty landmark list for a clip where a person is
+    fully visible.'
+    """
+    data, frame_count = mocked_detection_output
+    assert len(data) == frame_count
+    empty_frames = [i for i, entry in enumerate(data) if not entry]
+    assert empty_frames == [], (
+        f"Expected all {frame_count} frames to have landmarks but frames "
+        f"{empty_frames} were empty."
+    )
+
+
+def test_detection_code_path_landmark_count(mocked_detection_output) -> None:
+    """Each detected frame must contain exactly 33 landmark dicts."""
+    data, _ = mocked_detection_output
+    for frame_idx, entry in enumerate(data):
+        assert len(entry) == _NUM_LANDMARKS, (
+            f"Frame {frame_idx}: expected {_NUM_LANDMARKS} landmarks, got {len(entry)}"
+        )
+
+
+def test_detection_code_path_landmark_keys(mocked_detection_output) -> None:
+    """Every landmark dict must contain x, y, z, and visibility as floats."""
+    data, _ = mocked_detection_output
+    for frame_idx, entry in enumerate(data):
+        for lm_idx, lm in enumerate(entry):
+            missing = _LANDMARK_KEYS - set(lm.keys())
+            assert not missing, (
+                f"Frame {frame_idx}, landmark {lm_idx}: missing keys {missing}"
+            )
+            for key in _LANDMARK_KEYS:
+                assert isinstance(lm[key], float), (
+                    f"Frame {frame_idx}, landmark {lm_idx}, key '{key}': "
+                    f"expected float, got {type(lm[key]).__name__}"
+                )
+
+
+# ---------------------------------------------------------------------------
+# Optional real-person integration test
+#
+# Place a video with a fully-visible person at data/test_person.mp4 and
+# ensure the model file is present to activate this test.  It is skipped
+# automatically in environments where the file is absent.
+# ---------------------------------------------------------------------------
+
+_REAL_PERSON_VIDEO = _REPO_ROOT / "data" / "test_person.mp4"
+_REAL_PERSON_DETECTION_THRESHOLD = 0.95  # fraction of frames that must have landmarks
+
+
+@pytest.mark.skipif(
+    not (_REAL_PERSON_VIDEO.exists() and _MODEL.exists()),
+    reason=(
+        "Skipped: place a video with a fully-visible person at data/test_person.mp4 "
+        "and ensure the model is present to run this test."
+    ),
+)
+def test_real_person_video_detection_rate(tmp_path: Path) -> None:
+    """For a clip with a fully-visible person, >95 % of frames must be non-empty.
+
+    This is the end-to-end acceptance criterion exercised against real
+    MediaPipe inference rather than a mock.
+    """
+    import scripts.extract_landmarks as el
+
+    out_path = el.extract(_REAL_PERSON_VIDEO, _MODEL, tmp_path)
+    with out_path.open() as fh:
+        data = json.load(fh)
+
+    non_empty = sum(1 for entry in data if entry)
+    fraction = non_empty / len(data) if data else 0.0
+    assert fraction >= _REAL_PERSON_DETECTION_THRESHOLD, (
+        f"Only {fraction:.1%} of frames had detections; expected "
+        f">= {_REAL_PERSON_DETECTION_THRESHOLD:.0%}."
+    )

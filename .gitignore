@@ -1,0 +1,11 @@
+# Python byte-compiled / optimised / DLL files
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyc
+
+# pytest cache
+.pytest_cache/
+
+# Generated landmark output files (run scripts/extract_landmarks.py to regenerate)
+data/*_landmarks.json
